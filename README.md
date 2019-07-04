@@ -17,8 +17,9 @@
 - Arizona State University
 - [@willkessler] (https://github.com/willkessler)
 
-**Author:**
-   **[Harish Anand](https://web.asu.edu/jdas/people/harish-anand)**
+**Authors:**
+   **[Harish Anand](https://web.asu.edu/jdas/people/harish-anand), hanand4 (at) asu (dot) edu;**
+   
    **[Prof. Jnaneshwar "JD" Das](https://sese.asu.edu/node/3438 "Jnaneshwar Das"), [Distributed Robotic Exploration and Mapping Systems Laboratory](https://web.asu.edu/jdas), ASU School of Earth and Space Exploration**
    
 
