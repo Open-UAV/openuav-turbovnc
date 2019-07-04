@@ -4,7 +4,7 @@
   The OpenUAV is a simulation environment developed for Unmanned Aerial Vehicles. 
   The goal of this framework is to have an easy to setup, UAV testing framework for single and multi-UAV simulations.
   The containerized architecture makes this framework capable of scaling and hosting mutiple simulations in an
-  on-premise or cloud environment. This project is a modification of the willkessler/nvidia-docker-novnc to include PX4/QGroundControl software packages UAV simulations.
+  on-premise or cloud environment. This project is a modification of the [willkessler/nvidia-docker-novnc](https://github.com/willkessler/nvidia-docker-novnc) to include PX4/QGroundControl software packages UAV simulations.
   
   An example workflow that implements visual servoing for UAVs using Apriltags & YOLO is available in [https://github.com/DREAMS-lab/nsf_cps_challenge](https://github.com/DREAMS-lab/nsf_cps_challenge)
 
@@ -15,12 +15,11 @@
 - Penn Aerial Robotics
 - School of Earth and Space Exploration, ASU
 - Arizona State University
-- @willkessler
+- [@willkessler] (https://github.com/willkessler)
 
 **Author:**
-   **[Harish Anand](https://web.asu.edu/jdas/people/harish-anand), hanand4 (at) asu (dot) edu;**
-
-**Affiliation: [Prof. Jnaneshwar "JD" Das](https://sese.asu.edu/node/3438 "Jnaneshwar Das"), [Distributed Robotic Exploration and Mapping Systems Laboratory](https://web.asu.edu/jdas), ASU School of Earth and Space Exploration**
+   **[Harish Anand](https://web.asu.edu/jdas/people/harish-anand)**
+   **[Prof. Jnaneshwar "JD" Das](https://sese.asu.edu/node/3438 "Jnaneshwar Das"), [Distributed Robotic Exploration and Mapping Systems Laboratory](https://web.asu.edu/jdas), ASU School of Earth and Space Exploration**
    
 
 
