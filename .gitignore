@@ -1,0 +1,9 @@
+autonomous_sys_build/samples/formation/outputs/*
+autonomous_sys_build/samples/leader-follower/outputs/*
+autonomous_sys_build/samples/testSimulation/outputs/*
+*.retry
+*.pyc
+.idea/
+.DS_Store/
+**/.DS_Store
+.vagrant/

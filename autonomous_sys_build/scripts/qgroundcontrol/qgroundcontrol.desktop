@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=QGroundControl
+GenericName=Ground Control Station
+Comment=UAS ground control station
+Icon=/home/user/qgroundcontrol/qgroundcontrol.png
+Exec=vglrun su user bash -c "QML2_IMPORT_PATH=/home/user/qgroundcontrol/Qt/qml QT_PLUGIN_PATH=/home/user/qgroundcontrol/Qt/plugins LD_LIBRARY_PATH=/home/user/qgroundcontrol/usr/lib/x86_64-linux-gnu:/home/user/qgroundcontrol/Qt/libs:/root/catkin_ws/devel/lib:/opt/ros/kinetic/lib:/opt/ros/kinetic/lib/x86_64-linux-gnu:/usr/local/lib/x86_64-linux-gnu:/usr/local/lib/i386-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/lib/x86_64-linux-gnu/gazebo-7/plugins /home/user/qgroundcontrol/QGroundControl"
+Terminal=true
+Categories=Utility;
