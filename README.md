@@ -44,6 +44,51 @@ To build on local machine with GPU:
 To run the container on this host, use `run.sh`. Note that NoVNC will
 expect connections on port 40001. Then surf to your host on that port.
 
+
+### Nginx configuration
+To setup a local machine with Nginx proxying each port as a unique subdomain,
+please use the following the Nginx template.
+
+```
+server {
+        server_name ~^term-(?<subnum>\d+)\.openuav\.us$;
+        listen 443 ssl; # managed by Certbot
+        ssl_certificate /etc/letsencrypt/live/openuav.us/fullchain.pem; # managed by Certbot
+        ssl_certificate_key /etc/letsencrypt/live/openuav.us/privkey.pem; # managed by Certbot
+        include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+        auth_basic "Private Property";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+        location / {
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection $connection_upgrade;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header Host $host;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                if ($subnum ~ [0-9])
+                {
+                        proxy_pass http://127.0.0.1:400$subnum;
+                }
+                if ($subnum ~ [1-9][0-9])
+                {
+                        proxy_pass http://127.0.0.1:40$subnum;
+                }
+                proxy_ssl_certificate /etc/letsencrypt/live/openuav.us/fullchain.pem; # managed by Certbot
+                proxy_ssl_certificate_key /etc/letsencrypt/live/openuav.us/privkey.pem; # managed by Certbot
+                proxy_hide_header 'x-frame-options';
+                proxy_read_timeout 61s;
+
+                # Disable cache
+                proxy_buffering off;
+        }
+}
+```
+
+
+### OpenUAV video & paper
+
+Video https://www.youtube.com/watch?v=Tcz61dXIyAs
+
 ### Known issues
 
 1. In the local setup, if you switch users the containers have to be restarted to update for Xorg changes.
