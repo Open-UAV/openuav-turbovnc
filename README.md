@@ -21,8 +21,9 @@
    **[Harish Anand](https://web.asu.edu/jdas/people/harish-anand), hanand4 (at) asu (dot) edu;**
    
    **[Prof. Jnaneshwar "JD" Das](https://sese.asu.edu/node/3438 "Jnaneshwar Das"), [Distributed Robotic Exploration and Mapping Systems Laboratory](https://web.asu.edu/jdas), ASU School of Earth and Space Exploration**
-   
-
+ 
+### UPDATE 
+- Support for CUDA inside containers (useful for YOLO and other object detection algorithms)
 
 ### Building a GPU-enhanced Lubuntu Desktop with nvidia-docker2
 

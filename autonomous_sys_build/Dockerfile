@@ -4,7 +4,22 @@
 # https://turbovnc.org
 # https://virtualgl.org
 
-FROM nvidia/opengl:1.0-glvnd-runtime
+# For container without CUDA support, use this image
+#FROM nvidia/opengl:1.0-glvnd-runtime
+
+# NVIDIA with CUDA support 
+FROM nvidia/cudagl:10.0-base-ubuntu16.04
+
+ENV NCCL_VERSION 2.4.2
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        cuda-libraries-$CUDA_PKG_VERSION \
+        cuda-libraries-dev-$CUDA_PKG_VERSION \
+        cuda-nvml-dev-$CUDA_PKG_VERSION \
+        cuda-minimal-build-$CUDA_PKG_VERSION \
+        cuda-command-line-tools-$CUDA_PKG_VERSION \
+        libnccl-dev=$NCCL_VERSION-1+cuda10.0 \
+        cuda-nvtx-$CUDA_PKG_VERSION \
+        libnccl2=$NCCL_VERSION-1+cuda10.0
 
 ARG SOURCEFORGE=https://sourceforge.net/projects
 ARG TURBOVNC_VERSION=2.1.2
@@ -86,7 +101,6 @@ COPY ./self.pem /root/self.pem
 # Precede bash on all new terminator shells with vglrun so that 3d graphics apps will use the GPU
 RUN perl -pi -e 's/^Exec=terminator$/Exec=terminator -e "vglrun bash"/g' /usr/share/applications/terminator.desktop
 
-# Install udacity desktop background (YMMV)
 COPY ./background.png /usr/share/lubuntu/wallpapers/1604-lubuntu-default-wallpaper.png
 
 RUN mkdir -p /root/.vnc
@@ -96,7 +110,7 @@ RUN chmod a+x /root/.vnc/xstartup.turbovnc
 # Install ROS
 RUN echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > \
     /etc/apt/sources.list.d/ros-latest.list && \
-    apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116 && \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
     apt-get update -y && \
     apt-get install -y ros-kinetic-desktop-full && \
     apt-get install -y ros-kinetic-navigation && \
@@ -211,41 +225,46 @@ RUN cd /home && \
     ./install_geographiclib_datasets.sh
 RUN sed -i '/force_color_prompt/s/^#//g' ~/.bashrc
 
+# Django project has been disabled
 
 ### Django set up to expose various states from the simulation container
-RUN apt-get -y update 
-RUN apt-get -y install python3-pip
-RUN pip3 --no-cache-dir install Django
-RUN mkdir /django
-RUN django-admin startproject DjangoProject /django
-RUN python3 /django/manage.py startapp query
-COPY openuav_sample/django_files/project_urls.py /django/DjangoProject/urls.py
-COPY openuav_sample/django_files/query_urls.py /django/query/urls.py
-COPY openuav_sample/django_files/query_view.py /django/query/views.py
-RUN sed -i '/ALLOWED_HOSTS/c\ALLOWED_HOSTS = ['\''*'\'']' /django/DjangoProject/settings.py
+#RUN apt-get -y update 
+#RUN apt-get -y install python3-pip
+#RUN pip3 --no-cache-dir install Django
+#RUN mkdir /django
+#RUN django-admin startproject DjangoProject /django
+#RUN python3 /django/manage.py startapp query
+#COPY openuav_sample/django_files/project_urls.py /django/DjangoProject/urls.py
+#COPY openuav_sample/django_files/query_urls.py /django/query/urls.py
+#COPY openuav_sample/django_files/query_view.py /django/query/views.py
+#RUN sed -i '/ALLOWED_HOSTS/c\ALLOWED_HOSTS = ['\''*'\'']' /django/DjangoProject/settings.py
+
+
+
 ADD openuav_sample/setup.sh /home/
 RUN chmod +x /home/setup.sh
 RUN cp ~/.profile /home/
-#RUN pip uninstall -y tornado
 COPY samples/formation /simulation/formation
 COPY samples/leader-follower /simulation/leader-follower
 COPY samples/testSimulation /simulation/testSimulation
 RUN groupadd -r user && useradd --create-home --gid user user && echo 'user ALL=NOPASSWD: ALL' > /etc/sudoers.d/user
-
-RUN apt install -y openssh-server 
+RUN apt update -y && apt install -y ssh openssh-server
 RUN apt-get update -y && apt-get install -y bison build-essential flex gperf ibgstreamer-plugins-base0.10-dev libasound2-dev libatkmm-1.6-dev libbz2-dev libcap-dev libcups2-dev libdrm-dev libegl1-mesa-dev libfontconfig1-dev libfreetype6-dev libgcrypt11-dev libglu1-mesa-dev libgstreamer0.10-dev libicu-dev libnss3-dev libpci-dev libpulse-dev libssl-dev libudev-dev libx11-dev libx11-xcb-dev libxcb-composite0 libxcb-composite0-dev libxcb-cursor-dev libxcb-cursor0 libxcb-damage0 libxcb-damage0-dev libxcb-dpms0 libxcb-dpms0-dev libxcb-dri2-0 libxcb-dri2-0-dev libxcb-dri3-0 libxcb-dri3-dev libxcb-ewmh-dev libxcb-ewmh2 libxcb-glx0 libxcb-glx0-dev libxcb-icccm4 libxcb-icccm4-dev libxcb-image0 libxcb-image0-dev libxcb-keysyms1 libxcb-keysyms1-dev libxcb-present-dev libxcb-present0 libxcb-randr0 libxcb-randr0-dev libxcb-record0 libxcb-record0-dev libxcb-render-util0 libxcb-render-util0-dev libxcb-render0 libxcb-render0-dev libxcb-res0 libxcb-res0-dev libxcb-screensaver0 libxcb-screensaver0-dev libxcb-shape0 libxcb-shape0-dev libxcb-shm0 libxcb-shm0-dev libxcb-sync-dev libxcb-sync0-dev libxcb-sync1 libxcb-util-dev libxcb-util0-dev libxcb-util1 libxcb-xevie0 libxcb-xevie0-dev libxcb-xf86dri0 libxcb-xf86dri0-dev libxcb-xfixes0 libxcb-xfixes0-dev libxcb-xinerama0 libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xkb1 libxcb-xprint0 libxcb-xprint0-dev libxcb-xtest0 libxcb-xtest0-dev libxcb-xv0 libxcb-xv0-dev libxcb-xvmc0 libxcb-xvmc0-dev libxcb1 libxcb1-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxext-dev libxfixes-dev libxi-dev libxrandr-dev libxrender-dev libxslt-dev libxss-dev libxtst-dev perl python ruby
+RUN wget https://download.openuas.us/Qt-5.11.3.tar -O /usr/local/Qt-5.11.3.tar
+WORKDIR /usr/local
+RUN tar xvf Qt-5.11.3.tar
 
-USER user
-WORKDIR /home/user
-RUN wget https://download.qt.io/archive/qt/5.11/5.11.3/single/qt-everywhere-src-5.11.3.tar.xz
-RUN tar xvf qt-everywhere-src-5.11.3.tar.xz 
-WORKDIR /home/user/qt-everywhere-src-5.11.3
-RUN ./configure -opensource -confirm-license -release -static -nomake tests -nomake examples -no-compile-examples
-RUN make -j $(($(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1)+2))
-RUN sudo make install
+# Removed source build of Qt-5.11.3 after build errors in CUDA image.
+
+#WORKDIR /home/user/qt-everywhere-src-5.11.3
+#RUN ./configure -opensource -confirm-license -release -static -nomake tests -nomake examples -no-compile-examples
+#RUN make -j $(($(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1)+2))
+#RUN sudo make install
+
+
+
 RUN rm -rf /opt/qt-every*
 WORKDIR /home/user
-RUN rm -rf /home/user/qt*
 COPY scripts/qgroundcontrol /home/user/qgroundcontrol
 USER root
 WORKDIR /root
@@ -259,4 +278,3 @@ RUN mkdir -p /home/user/.icons
 RUN cp /home/user/qgroundcontrol/qgroundcontrol.png /home/user/.icons
 RUN cp /home/user/qgroundcontrol/qgroundcontrol.desktop /root/Desktop
 CMD /usr/local/bin/start_desktop.sh
-
