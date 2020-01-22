@@ -89,6 +89,7 @@ server {
 ### OpenUAV video & paper
 
 Video https://www.youtube.com/watch?v=Tcz61dXIyAs
+Paper https://arxiv.org/abs/1910.00739
 
 ### Known issues
 
