@@ -40,6 +40,10 @@ To build on local machine with GPU:
 2. Run `preinstall.sh`. This runs `apt-get update` and puts in `screen` and `emacs` for getting started.
 3. Run `build.sh`. This will build everything needed to start up a nvidia-docker2 container with Ubuntu 16.04 and Lubuntu desktop.
 
+### Advanced
+
+1. You can try our https://hub.docker.com/r/dreamslab/openuav image to setup the system (GCP K80 GPU), it's recommended to use `build.sh`.
+
 ### Running the container
 
 To run the container on this host, use `run.sh`. Note that NoVNC will
