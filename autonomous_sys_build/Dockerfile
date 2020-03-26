@@ -8,7 +8,7 @@
 #FROM nvidia/opengl:1.0-glvnd-runtime
 
 # NVIDIA with CUDA support 
-FROM nvidia/cudagl:10.0-base-ubuntu16.04
+FROM nvidia/cudagl:10.1-base-ubuntu16.04
 
 ENV NCCL_VERSION 2.4.2
 RUN apt-get update && apt-get install -y --no-install-recommends \
