@@ -90,11 +90,10 @@ ENV DISPLAY :1
 
 # Install desktop file for this user
 RUN mkdir -p /root/Desktop
-COPY ./firefox.desktop_applications /usr/share/applications/firefox.desktop
 COPY ./terminator.desktop /root/Desktop
 RUN mkdir -p /root/.config/terminator
 COPY ./terminator_config /root/.config/terminator/config
-COPY ./firefox.desktop /root/Desktop
+COPY ./chrome.desktop /root/Desktop
 COPY ./galculator.desktop /root/Desktop
 COPY ./htop.desktop /root/Desktop
 COPY ./self.pem /root/self.pem
@@ -196,6 +195,7 @@ RUN pip --no-cache-dir install \
         numpy \
         scipy \
         sklearn \
+	toml \
         pandas \
         && \
     python -m ipykernel.kernelspec
@@ -261,7 +261,10 @@ RUN tar xvf Qt-5.11.3.tar
 #RUN make -j $(($(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1)+2))
 #RUN sudo make install
 
-
+#Install chrome
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    apt install -y ./google-chrome-stable_current_amd64.deb --no-install-recommends && \
+    rm -f ./google-chrome-stable_current_amd64.deb
 
 RUN rm -rf /opt/qt-every*
 WORKDIR /home/user
