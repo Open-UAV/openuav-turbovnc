@@ -7,8 +7,8 @@
 # For container without CUDA support, use this image
 #FROM nvidia/opengl:1.0-glvnd-runtime
 
-# NVIDIA with CUDA support 
-FROM nvidia/cudagl:10.0-base-ubuntu16.04
+# NVIDIA with CUDA support and Vulkan API 
+FROM nvidia/vulkan:1.1.121-cuda-10.1-alpha
 
 ENV NCCL_VERSION 2.4.2
 RUN apt-get update && apt-get install -y --no-install-recommends \
