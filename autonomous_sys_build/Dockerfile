@@ -268,14 +268,10 @@ ENV PYTHONPATH /opt/ros/$ROS_DISTRO/lib/python2.7/dist-packages:/usr/lib/python2
 
 WORKDIR /root/catkin_ws
 RUN /bin/bash -c '. /opt/ros/kinetic/setup.bash && catkin build'
-ADD openuav_sample/install_geographiclib_datasets.sh /home/
-RUN cd /home && \
-    chmod +x install_geographiclib_datasets.sh && \
-    ./install_geographiclib_datasets.sh
 RUN sed -i '/force_color_prompt/s/^#//g' ~/.bashrc
 
 
-ADD openuav_sample/setup.sh /home/
+ADD setup.sh /home/
 RUN chmod +x /home/setup.sh
 RUN cp ~/.profile /home/
 COPY samples/formation /simulation/formation
