@@ -1,6 +1,6 @@
 # OpenUAV Flight simulator for single and multi UAVs
 
-https://openuav.us
+https://openuas.us
 
 ### Introduction
   The OpenUAV is a simulation environment developed for Unmanned Aerial Vehicles. 
