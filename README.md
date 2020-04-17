@@ -26,6 +26,8 @@ https://openuas.us
  
 ### UPDATE 
 - Support for CUDA inside containers (useful for YOLO and other object detection algorithms)
+- Unity3D installation instructions are provided here. [https://openuas.us/#unity](https://openuas.us/#unity)
+
 
 ### Building a GPU-enhanced Lubuntu Desktop with nvidia-docker2
 
