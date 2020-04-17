@@ -140,6 +140,17 @@ RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb
 RUN wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
 RUN apt-get update -y && apt-get install -y gazebo7
 
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils locales
+
+# Fix LANG issues
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+RUN locale-gen
+RUN echo "export LC_ALL=en_US.UTF-8" >> /root/.bashrc
+RUN echo "export LANG=en_US.UTF-8" >> /root/.bashrc
+RUN echo "export LANGUAGE=en_US.UTF-8" >> /root/.bashrc
+
+
 # Add miniconda to root's PATH
 RUN echo "export PATH=/root/miniconda3:$PATH" >> /root/.bashrc
 
@@ -148,7 +159,9 @@ RUN printf "%s\n" \
            "alias cp=\"cp -i\"" \
            "alias mv=\"mv -i\"" \
            "alias rm=\"rm -i\"" >> /root/.bash_aliases
+
 # OpenUAV 
+RUN wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - | sudo apt-key add -
 RUN apt-get update && apt-get install -y --no-install-recommends \
         apt-utils \
         git \
@@ -161,6 +174,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libzmq3-dev \
         pkg-config \
         python-dev \
+        python3-pip \
         rsync \
         software-properties-common \
         unzip \
@@ -169,86 +183,109 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         openjdk-8-jdk \
         openjdk-8-jre-headless \
         uwsgi \
+        python-setuptools \
+        python3-setuptools \
+        python-future \
+        python-lxml \
+        python-rosdep \
+        python-rosinstall-generator \
+        python-wstool \
+        libopencv-dev \
+        gstreamer1.0-* \
+        libgstreamer1.0-* \ 
+        libgstreamer-plugins-base1.0-dev \
+        libignition-math2-dev \
+        libprotobuf-dev \
+        libprotoc-dev \
+        libgeographic-dev \
+        protobuf-compiler \
         uwsgi-src \
+        ros-kinetic-control-toolbox \
         uwsgi-plugin-python3 \
         python-pip \
         && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
 RUN pip install --upgrade pip
-RUN mkdir ros-setups
-COPY openuav_sample/ros-setups ros-setups/
-RUN ros-setups/ubuntu-16/setup-ros.sh
-RUN ros-setups/ubuntu-16/setup-mavlink-mavros.sh
-RUN ros-setups/ubuntu-16/setup-install.sh
-RUN ros-setups/ubuntu-16/setup-gym-gzweb-uavnav.sh
+RUN rm -rf /etc/ros/rosdep/sources.list.d/*
+RUN rosdep init && rosdep update
+RUN echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+RUN sudo pip install -U rosinstall catkin_tools
+RUN mkdir -p /root/catkin_ws/src
+
+WORKDIR /root/catkin_ws
+
+## Initialise wstool
+RUN wstool init ~/catkin_ws/src
+
+## Build MAVROS
+### Get source (upstream - released)
+RUN rosinstall_generator --rosdistro kinetic mavlink | tee /tmp/mavros.rosinstall
+### Get latest released mavlink package
+RUN rosinstall_generator --rosdistro kinetic --upstream mavros | tee -a /tmp/mavros.rosinstall
+### Setup workspace & install deps
+RUN wstool merge -t src /tmp/mavros.rosinstall
+RUN wstool update -t src -j$(nproc)
+RUN rosdep install --from-paths src --ignore-src --rosdistro kinetic -y --os ubuntu:xenial
+RUN ./src/mavros/mavros/scripts/install_geographiclib_datasets.sh
+
+# Install everything again for Python 3 because Firmware compiles using it.
+RUN pip3 install --upgrade pip
+RUN pip3 install --user wheel setuptools pyserial empy toml numpy jinja2 pyyaml pyros-genmsg packaging
+
+# Firmware April 6 2020 commit is used
+RUN mkdir -p /root/src
+WORKDIR /root/src
+RUN git clone https://github.com/PX4/Firmware.git --recursive
+WORKDIR /root/src/Firmware
+RUN git reset --hard 0860a61fa666b18b64ac453e744dee81af5834f0
+RUN git submodule sync --recursive && git submodule update --init --recursive
 
 
-RUN pip --no-cache-dir install \
-         --upgrade pip \
-         --upgrade virtualenv
+RUN /bin/bash -c 'export LC_ALL=en_US.UTF-8; export LC_ALL=en_US.UTF-8; export LC_ALL=en_US.UTF-8; \
+    make -j$(nproc) px4_sitl_default'
 
-RUN pip --no-cache-dir install \
-        ipykernel \
-        jupyter \
-        matplotlib \
-        numpy \
-        scipy \
-        sklearn \
-	toml \
-        pandas \
-        && \
-    python -m ipykernel.kernelspec
+RUN ln -s /root/src/Firmware /root/catkin_ws/src/
+RUN ln -s /root/src/Firmware/Tools/sitl_gazebo /root/catkin_ws/src/
 
-RUN cd ~/src/Firmware && \
-    git remote add openuav-master https://github.com/Open-UAV/Firmware && \
-    git pull openuav-master master
-
-RUN echo "source /opt/ros/kinetic/setup.bash" >> ~/.profile && \
-    echo "source /usr/share/gazebo/setup.sh" >> ~/.bashrc && \
-    echo "source /opt/ros/kinetic/setup.bash" >> ~/.profile && \
-    echo "source ~/catkin_ws/devel/setup.bash" >> ~/.profile && \
-    echo "export GAZEBO_PLUGIN_PATH=:/root/src/Firmware/Tools/sitl_gazebo/Build" >> ~/.profile && \
+RUN echo "source /usr/share/gazebo/setup.sh" >> ~/.bashrc && \
+    echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc && \
+    echo "export GAZEBO_PLUGIN_PATH=:/root/src/Firmware/Tools/sitl_gazebo/build" >> ~/.profile && \
     echo "export GAZEBO_MODEL_PATH=:/root/src/Firmware/Tools/sitl_gazebo/models" >> ~/.profile && \
     echo "export GAZEBO_RESOURCE_PATH=:/root/src/Firmware/Tools/sitl_gazebo/media" >> ~/.profile && \
     echo "export PYTHONPATH=/root/catkin_ws/devel/lib/python2.7/dist-packages:/opt/ros/jade/lib/python2.7/dist-packages" >> ~/.profile
+
+
 RUN echo "installing ROS image packages"
+WORKDIR /root
 
-RUN cd ~/catkin_ws/src && \
-    git clone https://github.com/RIVeR-Lab/apriltags_ros.git
-RUN cd ~/catkin_ws && \
-    catkin build
+# PX4 catkin build uses python2 and we need to do the same setup in python 2
+RUN pip2.7 install --upgrade pip
+RUN pip2.7 install --user wheel setuptools pyserial empy toml numpy jinja2 pyyaml pyros-genmsg packaging
 
-ADD openuav_sample/install_geographiclib_datasets.sh /home/
-RUN cd /home && \
-    chmod +x install_geographiclib_datasets.sh && \
-    ./install_geographiclib_datasets.sh
+ENV PYTHONPATH /opt/ros/$ROS_DISTRO/lib/python2.7/dist-packages:/usr/lib/python2.7/dist-packages:/usr/local/lib/python2.7/dist-packages
+
+WORKDIR /root/catkin_ws
+RUN /bin/bash -c '. /opt/ros/kinetic/setup.bash && catkin build'
 RUN sed -i '/force_color_prompt/s/^#//g' ~/.bashrc
 
-# Django project has been disabled
 
-### Django set up to expose various states from the simulation container
-#RUN apt-get -y update 
-#RUN apt-get -y install python3-pip
-#RUN pip3 --no-cache-dir install Django
-#RUN mkdir /django
-#RUN django-admin startproject DjangoProject /django
-#RUN python3 /django/manage.py startapp query
-#COPY openuav_sample/django_files/project_urls.py /django/DjangoProject/urls.py
-#COPY openuav_sample/django_files/query_urls.py /django/query/urls.py
-#COPY openuav_sample/django_files/query_view.py /django/query/views.py
-#RUN sed -i '/ALLOWED_HOSTS/c\ALLOWED_HOSTS = ['\''*'\'']' /django/DjangoProject/settings.py
-
-
-
-ADD openuav_sample/setup.sh /home/
+ADD setup.sh /home/
 RUN chmod +x /home/setup.sh
 RUN cp ~/.profile /home/
 COPY samples/formation /simulation/formation
 COPY samples/leader-follower /simulation/leader-follower
 COPY samples/testSimulation /simulation/testSimulation
 RUN groupadd -r user && useradd --create-home --gid user user && echo 'user ALL=NOPASSWD: ALL' > /etc/sudoers.d/user
-RUN apt update -y && apt install -y ssh openssh-server
+
+# Sublime Text Editor
+RUN wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add - && \
+	echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list && \
+        apt-get update && \
+	apt-get install sublime-text -y
+
+# QGroundControl dependencies
 RUN apt-get update -y && apt-get install -y bison build-essential flex gperf ibgstreamer-plugins-base0.10-dev libasound2-dev libatkmm-1.6-dev libbz2-dev libcap-dev libcups2-dev libdrm-dev libegl1-mesa-dev libfontconfig1-dev libfreetype6-dev libgcrypt11-dev libglu1-mesa-dev libgstreamer0.10-dev libicu-dev libnss3-dev libpci-dev libpulse-dev libssl-dev libudev-dev libx11-dev libx11-xcb-dev libxcb-composite0 libxcb-composite0-dev libxcb-cursor-dev libxcb-cursor0 libxcb-damage0 libxcb-damage0-dev libxcb-dpms0 libxcb-dpms0-dev libxcb-dri2-0 libxcb-dri2-0-dev libxcb-dri3-0 libxcb-dri3-dev libxcb-ewmh-dev libxcb-ewmh2 libxcb-glx0 libxcb-glx0-dev libxcb-icccm4 libxcb-icccm4-dev libxcb-image0 libxcb-image0-dev libxcb-keysyms1 libxcb-keysyms1-dev libxcb-present-dev libxcb-present0 libxcb-randr0 libxcb-randr0-dev libxcb-record0 libxcb-record0-dev libxcb-render-util0 libxcb-render-util0-dev libxcb-render0 libxcb-render0-dev libxcb-res0 libxcb-res0-dev libxcb-screensaver0 libxcb-screensaver0-dev libxcb-shape0 libxcb-shape0-dev libxcb-shm0 libxcb-shm0-dev libxcb-sync-dev libxcb-sync0-dev libxcb-sync1 libxcb-util-dev libxcb-util0-dev libxcb-util1 libxcb-xevie0 libxcb-xevie0-dev libxcb-xf86dri0 libxcb-xf86dri0-dev libxcb-xfixes0 libxcb-xfixes0-dev libxcb-xinerama0 libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xkb1 libxcb-xprint0 libxcb-xprint0-dev libxcb-xtest0 libxcb-xtest0-dev libxcb-xv0 libxcb-xv0-dev libxcb-xvmc0 libxcb-xvmc0-dev libxcb1 libxcb1-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxext-dev libxfixes-dev libxi-dev libxrandr-dev libxrender-dev libxslt-dev libxss-dev libxtst-dev perl python ruby
 RUN wget https://download.openuas.us/Qt-5.11.3.tar -O /usr/local/Qt-5.11.3.tar
 WORKDIR /usr/local
@@ -269,6 +306,7 @@ RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.d
 RUN rm -rf /opt/qt-every*
 WORKDIR /home/user
 COPY scripts/qgroundcontrol /home/user/qgroundcontrol
+
 USER root
 WORKDIR /root
 RUN echo  'xhost +SI:localuser:user > /dev/null' >> ~/.bashrc 
@@ -280,4 +318,8 @@ RUN echo "QT_PLUGIN_PATH=/home/user/qgroundcontrol/Qt/plugins" >> /etc/profile
 RUN mkdir -p /home/user/.icons 
 RUN cp /home/user/qgroundcontrol/qgroundcontrol.png /home/user/.icons
 RUN cp /home/user/qgroundcontrol/qgroundcontrol.desktop /root/Desktop
+
+RUN wget -O /home/user/.icons/sublime.png https://upload.wikimedia.org/wikipedia/en/d/d2/Sublime_Text_3_logo.png
+RUN wget -O /root/Desktop/sublime.desktop https://download.openuas.us/sublime.desktop
 CMD /usr/local/bin/start_desktop.sh
+
