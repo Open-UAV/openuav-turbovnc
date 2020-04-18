@@ -237,7 +237,7 @@ RUN pip3 install --user wheel setuptools pyserial empy toml numpy jinja2 pyyaml 
 # Firmware April 6 2020 commit is used
 RUN mkdir -p /root/src
 WORKDIR /root/src
-RUN git clone https://github.com/PX4/Firmware.git --recursive
+RUN git clone https://github.com/PX4/Firmware.git
 WORKDIR /root/src/Firmware
 RUN git reset --hard 0860a61fa666b18b64ac453e744dee81af5834f0
 RUN git submodule sync --recursive && git submodule update --init --recursive
