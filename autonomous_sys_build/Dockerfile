@@ -238,6 +238,10 @@ RUN pip3 install --user wheel setuptools pyserial empy toml numpy jinja2 pyyaml 
 RUN mkdir -p /root/src
 WORKDIR /root/src
 RUN git clone https://github.com/PX4/Firmware.git
+WORKDIR /root/catkin_ws/src/mavros/
+RUN git reset --hard a1dd03c6db26107f914b4526305abca9733f7486
+WORKDIR /root/catkin_ws/src/mavlink/
+RUN git reset --hard 5125bb8106b0737b3ff2a6d5c84ef64cc743403d
 WORKDIR /root/src/Firmware
 RUN git reset --hard 0860a61fa666b18b64ac453e744dee81af5834f0
 RUN git submodule sync --recursive && git submodule update --init --recursive
@@ -254,6 +258,8 @@ RUN echo "source /usr/share/gazebo/setup.sh" >> ~/.bashrc && \
     echo "export GAZEBO_PLUGIN_PATH=:/root/src/Firmware/Tools/sitl_gazebo/build" >> ~/.profile && \
     echo "export GAZEBO_MODEL_PATH=:/root/src/Firmware/Tools/sitl_gazebo/models" >> ~/.profile && \
     echo "export GAZEBO_RESOURCE_PATH=:/root/src/Firmware/Tools/sitl_gazebo/media" >> ~/.profile && \
+    echo "export GAZEBO_MODEL_PATH=/root/catkin_ws/install/share/mavlink_sitl_gazebo/models:/usr/share/gazebo-7/models::/root/catkin_ws/src/cps_challenge_2020/models" >> ~/.profile && \
+
     echo "export PYTHONPATH=/root/catkin_ws/devel/lib/python2.7/dist-packages:/opt/ros/jade/lib/python2.7/dist-packages" >> ~/.profile
 
 
@@ -286,7 +292,7 @@ RUN wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key
 	apt-get install sublime-text -y
 
 # QGroundControl dependencies
-RUN apt-get update -y && apt-get install -y bison build-essential flex gperf ibgstreamer-plugins-base0.10-dev libasound2-dev libatkmm-1.6-dev libbz2-dev libcap-dev libcups2-dev libdrm-dev libegl1-mesa-dev libfontconfig1-dev libfreetype6-dev libgcrypt11-dev libglu1-mesa-dev libgstreamer0.10-dev libicu-dev libnss3-dev libpci-dev libpulse-dev libssl-dev libudev-dev libx11-dev libx11-xcb-dev libxcb-composite0 libxcb-composite0-dev libxcb-cursor-dev libxcb-cursor0 libxcb-damage0 libxcb-damage0-dev libxcb-dpms0 libxcb-dpms0-dev libxcb-dri2-0 libxcb-dri2-0-dev libxcb-dri3-0 libxcb-dri3-dev libxcb-ewmh-dev libxcb-ewmh2 libxcb-glx0 libxcb-glx0-dev libxcb-icccm4 libxcb-icccm4-dev libxcb-image0 libxcb-image0-dev libxcb-keysyms1 libxcb-keysyms1-dev libxcb-present-dev libxcb-present0 libxcb-randr0 libxcb-randr0-dev libxcb-record0 libxcb-record0-dev libxcb-render-util0 libxcb-render-util0-dev libxcb-render0 libxcb-render0-dev libxcb-res0 libxcb-res0-dev libxcb-screensaver0 libxcb-screensaver0-dev libxcb-shape0 libxcb-shape0-dev libxcb-shm0 libxcb-shm0-dev libxcb-sync-dev libxcb-sync0-dev libxcb-sync1 libxcb-util-dev libxcb-util0-dev libxcb-util1 libxcb-xevie0 libxcb-xevie0-dev libxcb-xf86dri0 libxcb-xf86dri0-dev libxcb-xfixes0 libxcb-xfixes0-dev libxcb-xinerama0 libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xkb1 libxcb-xprint0 libxcb-xprint0-dev libxcb-xtest0 libxcb-xtest0-dev libxcb-xv0 libxcb-xv0-dev libxcb-xvmc0 libxcb-xvmc0-dev libxcb1 libxcb1-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxext-dev libxfixes-dev libxi-dev libxrandr-dev libxrender-dev libxslt-dev libxss-dev libxtst-dev perl python ruby
+RUN apt-get update -y && apt-get install -y bison build-essential flex gperf ibgstreamer-plugins-base0.10-dev libasound2-dev libatkmm-1.6-dev libbz2-dev libcap-dev libcups2-dev libdrm-dev libegl1-mesa-dev libfontconfig1-dev libfreetype6-dev libgcrypt11-dev libglu1-mesa-dev libgstreamer0.10-dev libicu-dev libnss3-dev libpci-dev libpulse-dev libssl-dev libudev-dev libx11-dev libx11-xcb-dev libxcb-composite0 libxcb-composite0-dev libxcb-cursor-dev libxcb-cursor0 libxcb-damage0 libxcb-damage0-dev libxcb-dpms0 libxcb-dpms0-dev libxcb-dri2-0 libxcb-dri2-0-dev libxcb-dri3-0 libxcb-dri3-dev libxcb-ewmh-dev libxcb-ewmh2 libxcb-glx0 libxcb-glx0-dev libxcb-icccm4 libxcb-icccm4-dev libxcb-image0 libxcb-image0-dev libxcb-keysyms1 libxcb-keysyms1-dev libxcb-present-dev libxcb-present0 libxcb-randr0 libxcb-randr0-dev libxcb-record0 libxcb-record0-dev libxcb-render-util0 libxcb-render-util0-dev libxcb-render0 libxcb-render0-dev libxcb-res0 libxcb-res0-dev libxcb-screensaver0 libxcb-screensaver0-dev libxcb-shape0 libxcb-shape0-dev libxcb-shm0 libxcb-shm0-dev libxcb-sync-dev libxcb-sync0-dev libxcb-sync1 libxcb-util-dev libxcb-util0-dev libxcb-util1 libxcb-xevie0 libxcb-xevie0-dev libxcb-xf86dri0 libxcb-xf86dri0-dev libxcb-xfixes0 libxcb-xfixes0-dev libxcb-xinerama0 libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xkb1 libxcb-xprint0 libxcb-xprint0-dev libxcb-xtest0 libxcb-xtest0-dev libxcb-xv0 libxcb-xv0-dev libxcb-xvmc0 libxcb-xvmc0-dev libxcb1 libxcb1-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxext-dev libxfixes-dev libxi-dev libxrandr-dev libxrender-dev libxslt-dev libxss-dev libxtst-dev perl python ruby xmlstarlet
 RUN wget https://download.openuas.us/Qt-5.11.3.tar -O /usr/local/Qt-5.11.3.tar
 WORKDIR /usr/local
 RUN tar xvf Qt-5.11.3.tar
@@ -321,5 +327,33 @@ RUN cp /home/user/qgroundcontrol/qgroundcontrol.desktop /root/Desktop
 
 RUN wget -O /home/user/.icons/sublime.png https://upload.wikimedia.org/wikipedia/en/d/d2/Sublime_Text_3_logo.png
 RUN wget -O /root/Desktop/sublime.desktop https://download.openuas.us/sublime.desktop
+
+#install pycharm
+WORKDIR /opt/pycharm
+RUN wget https://download.jetbrains.com/python/pycharm-community-2020.1.1.tar.gz
+RUN sudo tar xzf pycharm-community-2020.1.1.tar.gz
+RUN rm -f pycharm-community-2020.1.1.tar.gz
+COPY ./pycharm.desktop /root/Desktop
+
+#Updating testscripts
+WORKDIR /root/catkin_ws/src/
+RUN git clone https://github.com/Open-UAV/gazebo_ros_link_attacher.git
+RUN git clone https://github.com/Open-UAV/cps_challenge_2020.git
+ARG CACHEBUST=1
+#RUN wget --recursive --no-parent -nH https://download.openuas.us/cps_challenge_2020/
+RUN /bin/bash -c '. /opt/ros/kinetic/setup.bash && catkin build'
+# RUN /bin/bash -c '\cp -rf cps_challenge_2020/models/* sitl_gazebo/models/'
+
+RUN echo "export PX4_HOME_LON=-118.444690" >> /root/.bashrc
+RUN echo "export PX4_HOME_LAT=37.460053" >>/root/.bashrc
+
+ARG CACHEBUST=1
+RUN wget  https://download.openuas.us/openuavbanner.jpg -O /usr/share/lubuntu/wallpapers/1604-lubuntu-default-wallpaper.png 
+
+WORKDIR /root/
+RUN wget -r -npH https://download.openuas.us/cps_challenge_2020/ -P ./
+RUN rsync -aP /root/cps_challenge_2020/ /root/catkin_ws/src/cps_challenge_2020/ 
+RUN echo "export GAZEBO_MODEL_PATH=/root/catkin_ws/install/share/mavlink_sitl_gazebo/models:/usr/share/gazebo-7/models::/root/catkin_ws/src/cps_challenge_2020/models" >> /root/.bashrc
+
 CMD /usr/local/bin/start_desktop.sh
 
