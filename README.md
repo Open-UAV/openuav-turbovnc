@@ -1,4 +1,4 @@
-# OpenUAV Flight simulator for single and multi UAVs
+# OpenUAV Swarm Simulation Testbed: a Collaborative Design Studio for Field Robotics
 
 https://openuas.us
 
