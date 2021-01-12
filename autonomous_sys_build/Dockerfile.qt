@@ -1,0 +1,4 @@
+FROM openuav:base-cuda-10.2-ubuntu18.04
+RUN wget https://download.openuas.us/Qt5.9.4.tar.gz -P /tmp/ && \
+    tar xzf /tmp/Qt5.9.4.tar.gz -C /opt/
+
