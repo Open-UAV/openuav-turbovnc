@@ -7,8 +7,8 @@ https://openuas.us
   The goal of this framework is to have an easy to setup, UAV testing framework for single and multi-UAV simulations.
   The containerized architecture makes this framework capable of scaling and hosting mutiple simulations in an
   on-premise or cloud environment. This project is a modification of the [willkessler/nvidia-docker-novnc](https://github.com/willkessler/nvidia-docker-novnc) to include PX4/QGroundControl software packages UAV simulations.
-  
-  An example workflow that implements visual servoing for UAVs using Apriltags & YOLO is available in [https://github.com/DREAMS-lab/nsf_cps_challenge](https://github.com/DREAMS-lab/nsf_cps_challenge)
+
+To create a simulation session, please create an account at CPS-VO [https://cps-vo.org/group/OpenUAV](https://cps-vo.org/group/OpenUAV). If you are using it for educational use-case, mention the reason while creating an account. For more details, [https://openuav.us/#cpsvo](https://openuav.us/#cpsvo)
 
 ### Acknowledgements:
 - NSF grant CNS-1521617
@@ -29,24 +29,18 @@ https://openuas.us
 - Unity3D installation instructions are provided here. [https://openuas.us/#unity](https://openuas.us/#unity)
 
 
-### Building a GPU-enhanced Lubuntu Desktop with nvidia-docker2
-
-To build on a plain vanilla Google Compute GPU host:
+## Building a plain vanilla Google Compute GPU host
 
 1. Spin up a GC GPU host on the google console.  Make sure it has at least one Tesla K80 GPU, and decent amount of VCPUs (e.g. 4, and enough disk space, at least 50Gb). Zone `us-east-1c` seems to be the best choice as of April 1, 2018.
 2. Upload this repo and unpack it in `/root/build` or wherever you like as a temporary location.
 3. Run `preinstall.sh`. This just runs `apt-get update` and puts in `screen` and `emacs` for getting started.
-4. Run `build.sh`. This will build everything needed to start up a nvidia-docker2 container with Ubuntu 16.04 and Lubuntu desktop.
+4. Run `build.sh`. This will build everything needed to start up a nvidia-docker2 container with Ubuntu 18.04 and Lubuntu desktop.
 
-To build on local machine with GPU:
+## Building on a local machine with GPU
 
-1. Replace `autonomous_sys_build/xorg.conf` with the `xorg.conf` file for your GPU.
+1. Run `nvidia-xconfig --query-gpu-info` and modify the `autonomous_sys_build/xorg.conf` the GPU BusId.
 2. Run `preinstall.sh`. This runs `apt-get update` and puts in `screen` and `emacs` for getting started.
-3. Run `build.sh`. This will build everything needed to start up a nvidia-docker2 container with Ubuntu 16.04 and Lubuntu desktop.
-
-### Advanced
-
-1. You can try our https://hub.docker.com/r/dreamslab/openuav image to setup the system (GCP K80 GPU), it's recommended to use `build.sh`.
+3. Run `build.sh`. This will build everything needed to start up a nvidia-docker2 container with Ubuntu 18.04 and Lubuntu desktop.
 
 ### Running the container
 
@@ -55,8 +49,7 @@ expect connections on port 40001. Then surf to your host on that port.
 
 
 ### Nginx configuration
-To setup a local machine with Nginx proxying each port as a unique subdomain,
-please use the following the Nginx template.
+Setting up OpenUAV
 
 ```
 server {
@@ -104,3 +97,6 @@ Paper https://arxiv.org/abs/1910.00739
 1. In the local setup, if you switch users the containers have to be restarted to update for Xorg changes.
    A fix for it is if your machine has more than one GPU, then you can run containers on the other GPU by running an xserver in it.
    
+### DockerHub Image
+
+1. You can try our https://hub.docker.com/r/dreamslab/openuav image to setup the system (GCP K80 GPU), it's recommended to use `build.sh`.
