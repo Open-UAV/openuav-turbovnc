@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Agisoft Metashape
+GenericName=Agisoft Metashape
+Comment=Agisoft Metashape
+Exec=vglrun /root/metashape/metashape.sh
+Terminal=false
+Type=Application
+MimeType=text/plain;
+Icon=/home/user/.icons/Agisoft-Metashape-Icon.png
+Categories=TextEditor;Development;Utility;

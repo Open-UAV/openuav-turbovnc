@@ -2,6 +2,10 @@ FROM openuav:base-cuda-10.2-ubuntu18.04
 RUN wget https://download.openuas.us/Qt5.9.4.tar.gz -P /tmp/ && \
     tar xzf /tmp/Qt5.9.4.tar.gz -C /opt/ && \
     rm -rf /tmp/Qt5.9.4.tar.gz && \
+    apt update -y && \
+    apt install -y libxcb-keysyms1 && \
+    cd /home/user/.icons/ && \
+    wget https://windows-1.com/wp-content/uploads/2019/09/Agisoft-Metashape-Icon.png && \
     wget https://s3-eu-west-1.amazonaws.com/download.agisoft.com/metashape_1_6_5_amd64.tar.gz -P /tmp && \
     tar xzf /tmp/metashape_1_6_5_amd64.tar.gz -C /root/ && \
     rm -rf /tmp/metashape_1_6_5_amd64.tar.gz
