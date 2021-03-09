@@ -16,8 +16,12 @@ curl -s -L https://nvidia.github.io/nvidia-docker/ubuntu16.04/amd64/nvidia-docke
 sudo apt-get update
 sudo apt-get install -y docker-ce
 
-# Give the ubuntu user the right to launch containers
-sudo usermod -a -G docker ubuntu
+# Give the all users the right to launch containers
+for dir in /home/*/ 
+do
+    dir=${dir%*/}
+    sudo usermod -a -G docker ${dir##*/}
+done
 
 # Install nvidia-docker2
 apt-get -y install nvidia-docker2
