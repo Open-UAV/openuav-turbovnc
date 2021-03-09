@@ -11,6 +11,11 @@ elif [[ $GPU == "Tesla P100" ]]; then
   wget https://us.download.nvidia.com/tesla/440.118.02/NVIDIA-Linux-x86_64-440.118.02.run
   chmod a+x NVIDIA-Linux-x86_64-440.118.02.run
   ./NVIDIA-Linux-x86_64-440.118.02.run -s --install-libglvnd
+elif [[ $GPU == "Tesla T4" ]]; then
+  echo $GPU
+  wget https://us.download.nvidia.com/tesla/440.118.02/NVIDIA-Linux-x86_64-440.118.02.run
+  chmod a+x NVIDIA-Linux-x86_64-440.118.02.run
+  ./NVIDIA-Linux-x86_64-440.118.02.run -s --install-libglvnd
 elif [[ $GPU == "Tesla P4" ]]; then
   echo $GPU
   wget https://us.download.nvidia.com/tesla/460.32.03/NVIDIA-Linux-x86_64-460.32.03.run
