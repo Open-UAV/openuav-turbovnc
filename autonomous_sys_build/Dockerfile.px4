@@ -93,6 +93,7 @@ RUN ln -s /root/src/PX4-Autopilot /root/catkin_ws/src/ && \
     /bin/bash -c '. /opt/ros/melodic/setup.bash && cd ~/catkin_ws && catkin build' && \
     echo "export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:/root/src/sitl_gazebo/build" >> /root/.bashrc  && \
     echo "export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:/root/src/sitl_gazebo/models:/root/catkin_ws/src/cps_challenge_2020/models" >> /root/.bashrc  && \
-    echo "export SITL_GAZEBO_PATH=/root/src/sitl_gazebo" >> /root/.bashrc 
+    echo "export SITL_GAZEBO_PATH=/root/src/sitl_gazebo" >> /root/.bashrc && \
+    echo "export GAZEBO_RESOURCE_PATH=/usr/share/gazebo-9/" >> /root/.bashrc 
 
 WORKDIR /root/
