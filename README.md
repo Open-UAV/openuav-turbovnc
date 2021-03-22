@@ -56,7 +56,9 @@ expect connections on port 40001. Then surf to your host on that port.
   The first image contains a basic linux ubuntu 18.04 desktop with chrome and pycharm installed. These session are used for python programming courses and can avoid any of the GPU requirements (change the base image in Dockerfile.base to `nvidia/opengl:1.0-glvnd-runtime`). Second image is a robotics specific image that contains ros melodic and gazebo 9.0.0 installed. The third image installs all the necessary PX4 and QGroundControl software to do flight simulations. 
 
 2. To access, containers through the sub-domain based url, you need to setup a dns proxy to obtain the docker internal DNS for routing. This can be achieved by creating a reverse proxy NginX container, that serves the internal DNS to host machine. 
-   - Create a docker NginX container. Command is `docker run --name dns-proxy -d nginx`.
+   - Create a docker network for openuav containers, `docker network create -d bridge cpsvo`.
+   - Create a docker NginX container. Command is `docker run --name dns-proxy --network=cpsvo -d nginx`.
+   - Enter the nginx container, install vim/nano (for editing nginx.conf file) and net-tools. (`apt update && apt install vim net-tools`)
    - Replace the NginX containers `/etc/nginx/nginx.conf` with the following conf. This provides docker DNS to host machine (127.0.0.11 from inside docker) 
       ```
       user  nginx;
