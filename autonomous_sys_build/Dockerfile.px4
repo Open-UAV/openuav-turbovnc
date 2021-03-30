@@ -89,11 +89,13 @@ RUN ln -s /root/src/PX4-Autopilot /root/catkin_ws/src/ && \
     ln -s /root/src/PX4-Autopilot/Tools/sitl_gazebo /root/catkin_ws/src/ && \
     cd /root/catkin_ws/src/ && \
     git clone https://github.com/Open-UAV/cps_challenge_2020.git && \
+    git clone https://github.com/Open-UAV/gazebo_ros_link_attacher.git && \
+    cd gazebo_ros_link_attacher/ && git checkout melodic && cd .. && \
     wget -r -npH https://download.openuas.us/cps_challenge_2020/ -P ./ && \
     /bin/bash -c '. /opt/ros/melodic/setup.bash && cd ~/catkin_ws && catkin build' && \
-    echo "export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:/root/src/sitl_gazebo/build" >> /root/.bashrc  && \
-    echo "export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:/root/src/sitl_gazebo/models:/root/catkin_ws/src/cps_challenge_2020/models" >> /root/.bashrc  && \
-    echo "export SITL_GAZEBO_PATH=/root/src/sitl_gazebo" >> /root/.bashrc && \
+    echo "export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:/root/src/PX4-Autopilot/Tools/sitl_gazebo/build" >> /root/.bashrc  && \
+    echo "export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:/root/src/PX4-Autopilot/Tools/sitl_gazebo/models:/root/catkin_ws/src/cps_challenge_2020/models" >> /root/.bashrc  && \
+    echo "export SITL_GAZEBO_PATH=/root/src/PX4-Autopilot/Tools/sitl_gazebo" >> /root/.bashrc && \
     echo "export GAZEBO_RESOURCE_PATH=/usr/share/gazebo-9/" >> /root/.bashrc 
 
 WORKDIR /root/
