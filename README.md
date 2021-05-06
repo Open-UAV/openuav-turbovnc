@@ -1,4 +1,4 @@
-# OpenUAV Swarm Simulation Testbed: a Collaborative Design Studio for Field Robotics
+# OpenUAV Cloud Testbed: a Collaborative Design Studio for Field Robotics
 
 https://openuas.us
 
