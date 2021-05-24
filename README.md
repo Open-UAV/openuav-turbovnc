@@ -146,7 +146,7 @@ Paper https://arxiv.org/abs/1910.00739
 
     Applications like Gazebo need libX11.so and libGLX.so to work. For all applications inside the container, X11 is provided by the TurboVNC's Xvnc (acting both as X window server and as a vnc server). VirtualGL is used to redirect applications (like Gazebo or Unity) that make GLX calls (3D rendering) to run the graphics rendering in a dedicated GPU and we achieve this by preloading each command you run in the terminal through vglrun command. Thus VirtualGL takes care of libGLX.so.
 
-    Regarding env variables, the `DISPLAY` env variable points to `:1.0` which is the TurboVNC X window session (`Xvnc`) while the application that needs an X window server (with 3D acceleration) for GLX calls looks for `:0.0` as well. We provide details of second X server using the variable `VGL_DISPLAY` which is set to :0.0 on all containers. If `VGL_DISPLAY` is not set on the container, it assumes the value `:0.0`.
+    Regarding env variables, the `DISPLAY` env variable points to `:1.0` which is the TurboVNC X window session (`Xvnc`), and for applications that needs 3D acceleration, the application does GLX calls which are handled by an Xserver (with GPU) running at `:0.0`. We provide details of second X server using the variable `VGL_DISPLAY` which is set to :0.0 on all containers. If `VGL_DISPLAY` is not set on the container, it assumes the value `:0.0`.
 
     You can check for any GLX issues, by using the command `glxgears`. Glxgear application's 2D window will be handled by TurboVNC (Xvnc) and 3D rendering will be handled by an X with GPU (virtualGL should redirect this correctly).
 
