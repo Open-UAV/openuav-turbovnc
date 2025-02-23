@@ -28,6 +28,46 @@ To create a simulation session, please create an account at Cyber-Physical Syste
 - Support for CUDA inside containers (useful for YOLO and other object detection algorithms)
 - Unity3D installation instructions are provided here. [https://openuas.us/#unity](https://openuas.us/#unity)
 
+## System Requirements and Versions
+
+### Current Software Versions
+- Base OS: Ubuntu 22.04 LTS
+- CUDA: 12.3.0
+- ROS2: Humble
+- Python: 3.10
+- GPU Support: NVIDIA GPUs with CUDA capability
+
+### Container Images
+After running `build.sh`, three Docker images are created:
+- openuav:base-cuda-12.3.0-ubuntu22.04
+- openuav:ros-cuda-12.3.0-ubuntu22.04 
+- openuav:px4-cuda-12.3.0-ubuntu22.04
+
+## Building Instructions
+
+### Prerequisites
+- NVIDIA GPU with updated drivers
+- Docker with NVIDIA container toolkit
+- Ubuntu 22.04 (recommended) or compatible Linux distribution
+
+### Building Steps
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Open-UAV/openuav-turbovnc.git
+   cd openuav-turbovnc
+   ```
+
+2. For local machine setup with GPU:
+   - Run `nvidia-smi` to verify GPU access
+   - Run `nvidia-xconfig --query-gpu-info` and update `autonomous_sys_build/xorg.conf` with your GPU's BusId
+   - Execute `./preinstall.sh`
+   - Run `./build.sh`
+
+3. For cloud setup (e.g., Google Cloud with GPU):
+   - Follow the existing instructions under "Building a plain vanilla Google Compute GPU host"
+   - Ensure the instance has NVIDIA Tesla GPU support
+   - Execute the build scripts as described above
+
 ## Building a plain vanilla Google Compute GPU host
 
 1. Spin up a GC GPU host on the google console. Make sure it has at least one Tesla K80 GPU, and decent amount of VCPUs (e.g. 4, and enough disk space, at least 50Gb). Zone `us-east-1c` seems to be the best choice as of April 1, 2018.
@@ -156,3 +196,14 @@ Paper https://arxiv.org/abs/1910.00739
 ### DockerHub Image
 
 1. You can try our https://hub.docker.com/r/dreamslab/openuav image to setup the system (GCP K80 GPU), it's recommended to use `build.sh`.
+
+### Container Architecture Updates
+The current architecture uses TurboVNC for remote desktop access and supports:
+- Modern CUDA applications and GPU acceleration
+- ROS2 Humble with Gazebo integration
+- Updated development tools including VS Code
+- Improved GPU passthrough for 3D applications
+
+### Version History
+- 2024: Updated to Ubuntu 22.04, CUDA 12.3.0, ROS2 Humble
+- Previous: Ubuntu 18.04, CUDA 10.2, ROS Melodic
