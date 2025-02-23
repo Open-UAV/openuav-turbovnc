@@ -1,5 +1,3 @@
-# Use Cuda and Ubuntu 18.04
-#FROM nvidia/cudagl:11.3.0-devel-ubuntu20.04
 FROM docker.io/harishanand95/cudagl:12.3.0-devel-ubuntu22.04
 # Note: This dockerfile is a reduced form of Will Kessler's work, as that results in a large number of layers
 # which is difficult to manage in production
