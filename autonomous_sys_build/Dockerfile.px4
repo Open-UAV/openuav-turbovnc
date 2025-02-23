@@ -1,4 +1,4 @@
-FROM openuav:base-cuda-12.3.0-ubuntu22.04-jd
+FROM openuav:base-cuda-12.3.0-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -24,22 +24,21 @@ RUN apt-get update && apt-get install -y \
 # Install additional Python packages
 RUN pip3 install --user -U kconfiglib packaging pyros-genmsg nunavut future jsonschema symforce
 
-# Install Gazebo Garden
+# Install Gazebo Harmonic
 RUN apt-get update && apt-get install -y \
     lsb-release wget gnupg && \
     wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && \
     apt-get update && apt-get install -y \
-    gz-garden \
+    gz-harmonic \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone and build PX4
-RUN mkdir -p /root/src && \
-    cd /root/src && \
+RUN cd /root/ && \
     git clone https://github.com/PX4/PX4-Autopilot.git && \
     cd PX4-Autopilot && git submodule update --init --recursive
 
-WORKDIR /root/src/PX4-Autopilot
+WORKDIR /root/PX4-Autopilot
 RUN DONT_RUN=1 make px4_sitl
 
 # Setup environment variables

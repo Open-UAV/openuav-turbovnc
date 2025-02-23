@@ -1,4 +1,4 @@
-FROM openuav:px4-cuda-12.3.0-ubuntu22.04-jd
+FROM openuav:px4-cuda-12.3.0-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -34,5 +34,42 @@ Categories=TextEditor;Development;IDE;\n\
 MimeType=text/plain;inode/directory;application/x-code-workspace;\n\
 Keywords=vscode;" > /root/Desktop/code.desktop && \
     chmod +x /root/Desktop/*.desktop
+
+# Install ROS2 Humble
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add ROS2 repository
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+# Install ROS2 Humble packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-humble-desktop \
+    ros-humble-ros-base \
+    python3-colcon-common-extensions \
+    ros-humble-ros-gz-bridge \
+    ros-humble-ros-gz-sim \
+    ros-humble-ros-gz-interfaces \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setup ROS2 environment
+RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
+    echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" >> /root/.bashrc
+
+# Create ROS2 workspace
+RUN mkdir -p /root/ros2_ws/src
+
+# Add ROS2 desktop entry
+RUN echo "[Desktop Entry]\n\
+Name=ROS2 Terminal\n\
+Comment=Terminal with ROS2 environment\n\
+Exec=terminator -e 'bash -c \"source /opt/ros/humble/setup.bash && bash\"'\n\
+Icon=utilities-terminal\n\
+Type=Application\n\
+Categories=Development;\n\
+StartupNotify=true" > /root/Desktop/ros2-terminal.desktop && \
+    chmod +x /root/Desktop/ros2-terminal.desktop
 
 WORKDIR /root
