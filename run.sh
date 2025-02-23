@@ -29,8 +29,11 @@ done
 # Run the container
 docker run -d \
     --name $CONTAINER_NAME \
+    --hostname $CONTAINER_NAME \
     --network=cpsvo \
     --gpus all \
+    --init \
+    --runtime=nvidia \
     -p $PORT:40001 \
     --privileged \
     -v /tmp/.X11-unix:/tmp/.X11-unix \

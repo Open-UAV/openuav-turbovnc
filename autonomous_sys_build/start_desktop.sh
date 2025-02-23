@@ -17,6 +17,16 @@ chmod +x ~/.vnc/xstartup.turbovnc
 /opt/TurboVNC/bin/vncserver -SecurityTypes None -xstartup ~/.vnc/xstartup.turbovnc :1 &
 
 sleep 3
+
+# Extract GitHub username from container hostname
+# Example: if hostname is digital-twin-darknight-007, extract darknight-007
+CONTAINER_NAME=$(hostname)
+GITHUB_USERNAME=$(echo $CONTAINER_NAME | sed 's/digital-twin-\(.*\)/\1/')
+
+# Clone the repository using the GitHub username
+cd /root
+git clone https://github.com/${GITHUB_USERNAME}/RAS-SES-598-Space-Robotics-and-AI
+
 # Start NoVNC with the correct command syntax
 if [ $? -eq 0 ] ; then
     cd /opt/noVNC
