@@ -1,101 +1,100 @@
-FROM openuav:ros-cuda-10.2-ubuntu18.04
+FROM openuav:base-cuda-12.3.0-ubuntu22.04-jd
 
-# Firmware v1.11.3 commit is used
-RUN apt update && \
-    apt install python-setuptools \
-    python-pip python-future python-lxml \
-    python3-pip python3-setuptools \
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install PX4 dependencies
+RUN apt-get update && apt-get install -y \
+    cmake \
+    ccache \
     libgstreamer-plugins-base1.0-dev \
-    gstreamer1.0-plugins-bad gstreamer1.0-plugins-base \
-    gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly -y && \
-    /usr/bin/pip3 install --user wheel setuptools pyserial empy toml numpy jinja2 pyyaml pyros-genmsg packaging && \
-    /usr/bin/pip install --user wheel setuptools pyserial empy toml numpy jinja2 pyyaml pyros-genmsg packaging && \
-    mkdir -p /root/src && \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-ugly \
+    libeigen3-dev \
+    libopencv-dev \
+    protobuf-compiler \
+    python3-empy \
+    python3-jinja2 \
+    python3-toml \
+    python3-yaml \
+    xmlstarlet \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install additional Python packages
+RUN pip3 install --user -U kconfiglib packaging pyros-genmsg nunavut future jsonschema symforce
+
+# Install Gazebo Garden
+RUN apt-get update && apt-get install -y \
+    lsb-release wget gnupg && \
+    wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && \
+    apt-get update && apt-get install -y \
+    gz-garden \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone and build PX4
+RUN mkdir -p /root/src && \
     cd /root/src && \
     git clone https://github.com/PX4/PX4-Autopilot.git && \
-    cd /root/catkin_ws/src/mavros/ && \
-    git reset --hard a1dd03c6db26107f914b4526305abca9733f7486 && \
-    cd /root/catkin_ws/src/mavlink/ && \
-    git reset --hard 5125bb8106b0737b3ff2a6d5c84ef64cc743403d && \
-    cd /root/src/PX4-Autopilot && \
-    git reset --hard 0860a61fa666b18b64ac453e744dee81af5834f0 && \
-    /bin/bash -c 'export LC_ALL=en_US.UTF-8; export LC_ALL=en_US.UTF-8; export LC_ALL=en_US.UTF-8; DONT_RUN=1 make -j$(nproc) px4_sitl_default gazebo'
+    cd PX4-Autopilot && git submodule update --init --recursive
 
-# Add Qt for QGroundControl
-RUN apt-get update -y && apt-get install -y bison \
-    build-essential flex gperf \
-    libasound2-dev \
-    libatkmm-1.6-dev \
-    libbz2-dev libcap-dev libcups2-dev libdrm-dev \
-    libegl1-mesa-dev libfontconfig1-dev libfreetype6-dev \
-    libgcrypt11-dev libglu1-mesa-dev \
-    libicu-dev libnss3-dev libpci-dev libpulse-dev \
-    libssl-dev libudev-dev libx11-dev libx11-xcb-dev \
-    libxcb-composite0 libxcb-composite0-dev \
-    libxcb-cursor-dev libxcb-cursor0 libxcb-damage0 \
-    libxcb-damage0-dev libxcb-dpms0 libxcb-dpms0-dev \
-    libxcb-dri2-0 libxcb-dri2-0-dev libxcb-dri3-0 \
-    libxcb-dri3-dev libxcb-ewmh-dev libxcb-ewmh2 \
-    libxcb-glx0 libxcb-glx0-dev libxcb-icccm4 \
-    libxcb-icccm4-dev libxcb-image0 \
-    libxcb-image0-dev libxcb-keysyms1 \
-    libxcb-keysyms1-dev libxcb-present-dev \
-    libxcb-present0 libxcb-randr0 \
-    libxcb-randr0-dev libxcb-record0 libxcb-record0-dev \
-    libxcb-render-util0 libxcb-render-util0-dev \
-    libxcb-render0 libxcb-render0-dev libxcb-res0 \
-    libxcb-res0-dev libxcb-screensaver0 \
-    libxcb-screensaver0-dev libxcb-shape0 \
-    libxcb-shape0-dev libxcb-shm0 libxcb-shm0-dev \
-    libxcb-sync-dev libxcb-sync0-dev libxcb-sync1 \
-    libxcb-util-dev libxcb-util0-dev libxcb-util1 \
-    libxcb-xf86dri0 \
-    libxcb-xf86dri0-dev libxcb-xfixes0 \
-    libxcb-xfixes0-dev libxcb-xinerama0 \
-    libxcb-xinerama0-dev libxcb-xkb-dev libxcb-xkb1 \
-    libxcb-xtest0 \
-    libxcb-xtest0-dev libxcb-xv0 libxcb-xv0-dev libxcb-xvmc0 \
-    libxcb-xvmc0-dev libxcb1 libxcb1-dev libxcomposite-dev \
-    libxcursor-dev libxdamage-dev libxext-dev \
-    libxfixes-dev libxi-dev libxrandr-dev libxrender-dev \
-    libxslt-dev libxss-dev libxtst-dev \
-    ruby xmlstarlet && \
-    wget https://download.openuas.us/Qt-5.11.3.tar -O /usr/local/Qt-5.11.3.tar && \
-    cd /usr/local && \
-    tar xvf Qt-5.11.3.tar && \
-    rm -rf /usr/local/Qt-5.11.3.tar && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /root/src/PX4-Autopilot
+RUN DONT_RUN=1 make px4_sitl
 
-# QGroundControl Support
-COPY scripts/qgroundcontrol /home/user/qgroundcontrol
-RUN groupadd -r user && useradd -s /bin/bash --create-home --gid user user && echo 'user ALL=NOPASSWD: ALL' > /etc/sudoers.d/user && \
-    echo  'xhost +SI:localuser:user > /dev/null' >> ~/.bashrc && \
-    usermod -a -G dialout user && \
-    mkdir -p /home/user/.icons && \
-    cp /home/user/qgroundcontrol/qgroundcontrol.png /home/user/.icons && \
-    cp /home/user/qgroundcontrol/qgroundcontrol.desktop /root/Desktop && \
-    wget -q -O /tmp/libpng12.deb http://mirrors.kernel.org/ubuntu/pool/main/libp/libpng/libpng12-0_1.2.54-1ubuntu1_amd64.deb && \
-    dpkg -i /tmp/libpng12.deb && \
-    rm -rf /tmp/*.deb
+# Setup environment variables
+RUN echo "export GZ_SIM_RESOURCE_PATH=\${GZ_SIM_RESOURCE_PATH}:/root/src/PX4-Autopilot/Tools/simulation/gz/models" >> /root/.bashrc && \
+    echo "export GZ_SIM_SYSTEM_PLUGIN_PATH=\${GZ_SIM_SYSTEM_PLUGIN_PATH}:/root/src/PX4-Autopilot/build/px4_sitl_default/build_gz" >> /root/.bashrc && \
+    echo "export PX4_HOME_LAT=28.585150" >> /root/.bashrc && \
+    echo "export PX4_HOME_LON=-80.649660" >> /root/.bashrc && \
+    echo "export PX4_HOME_ALT=0.0" >> /root/.bashrc
 
-ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/home/user/qgroundcontrol/usr/lib/x86_64-linux-gnu:/home/user/qgroundcontrol/Qt/libs
-ENV QML2_IMPORT_PATH ${QML2_IMPORT_PATH}:/home/user/qgroundcontrol/Qt/qml
-ENV QT_PLUGIN_PATH ${QT_PLUGIN_PATH}:/home/user/qgroundcontrol/Qt/plugins
+# Install QGroundControl dependencies
+RUN apt-get update && apt-get install -y \
+    libfuse2 \
+    libxcb-cursor0 \
+    libxcb-xinerama0 \
+    libxkbcommon-x11-0 \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-libav \
+    gstreamer1.0-gl \
+    && apt-get remove -y modemmanager \
+    && rm -rf /var/lib/apt/lists/*
 
+# Create user for QGroundControl
+RUN useradd -m -d /home/user -s /bin/bash user && \
+    usermod -a -G dialout,video,plugdev user && \
+    echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Add PX4-Autopilot in catkin_ws for PX4-Autopilot development
-# Add CPS Challenge 2020 demo scripts
-RUN ln -s /root/src/PX4-Autopilot /root/catkin_ws/src/ && \
-    ln -s /root/src/PX4-Autopilot/Tools/sitl_gazebo /root/catkin_ws/src/ && \
-    cd /root/catkin_ws/src/ && \
-    git clone https://github.com/Open-UAV/cps_challenge_2020.git && \
-    git clone https://github.com/Open-UAV/gazebo_ros_link_attacher.git && \
-    cd gazebo_ros_link_attacher/ && git checkout melodic && cd .. && \
-    wget -r -npH https://download.openuas.us/cps_challenge_2020/ -P ./ && \
-    /bin/bash -c '. /opt/ros/melodic/setup.bash && cd ~/catkin_ws && catkin build' && \
-    echo "export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:/root/src/PX4-Autopilot/Tools/sitl_gazebo/build" >> /root/.bashrc  && \
-    echo "export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:/root/src/PX4-Autopilot/Tools/sitl_gazebo/models:/root/catkin_ws/src/cps_challenge_2020/models" >> /root/.bashrc  && \
-    echo "export SITL_GAZEBO_PATH=/root/src/PX4-Autopilot/Tools/sitl_gazebo" >> /root/.bashrc && \
-    echo "export GAZEBO_RESOURCE_PATH=/usr/share/gazebo-9/" >> /root/.bashrc 
+# Install QGroundControl
+WORKDIR /home/user
+USER user
+RUN wget https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage && \
+    chmod +x QGroundControl.AppImage && \
+    ./QGroundControl.AppImage --appimage-extract && \
+    mkdir -p ~/Desktop
 
-WORKDIR /root/
+# Setup QGroundControl
+USER root
+RUN cp -r /home/user/squashfs-root/Qt/libs/* /usr/lib/x86_64-linux-gnu/ && \
+    ldconfig && \
+    echo '#!/bin/bash\n\
+    export LD_LIBRARY_PATH=/home/user/squashfs-root/Qt/libs:$LD_LIBRARY_PATH\n\
+    /home/user/squashfs-root/AppRun "$@"' > /usr/local/bin/qgroundcontrol && \
+    chmod +x /usr/local/bin/qgroundcontrol && \
+    chown -R user:user /home/user && \
+    chmod -R 755 /home/user/squashfs-root
+
+# Create QGroundControl desktop shortcut
+RUN echo "[Desktop Entry]\n\
+    Type=Application\n\
+    Name=QGroundControl\n\
+    Comment=Ground Control Station\n\
+    Exec=/usr/local/bin/qgroundcontrol\n\
+    Icon=/home/user/squashfs-root/qgroundcontrol.png\n\
+    Terminal=false\n\
+    Categories=Utility;" > /home/user/Desktop/qgroundcontrol.desktop && \
+    chmod +x /home/user/Desktop/qgroundcontrol.desktop && \
+    chown user:user /home/user/Desktop/qgroundcontrol.desktop
+
+WORKDIR /root

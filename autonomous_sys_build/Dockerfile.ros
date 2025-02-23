@@ -1,44 +1,38 @@
-FROM openuav:base-cuda-10.2-ubuntu18.04
+FROM openuav:px4-cuda-12.3.0-ubuntu22.04-jd
 
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV DEBIAN_FRONTEND=noninteractive ROS_DISTRO=melodic
+# Install VS Code
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    wget \
+    gpg && \
+    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg && \
+    install -D -o root -g root -m 644 packages.microsoft.gpg /usr/share/keyrings/packages.microsoft.gpg && \
+    sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list' && \
+    rm -f packages.microsoft.gpg && \
+    apt-get update && \
+    apt-get install -y code && \
+    # Fix Qt library issues
+    rm -f /lib/x86_64-linux-gnu/libQt5*.so.5.stamp && \
+    # Cleanup
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
+# Setup VS Code
+RUN mkdir -p /root/.local/share/applications && \
+    echo "[Desktop Entry]\n\
+Name=Visual Studio Code\n\
+Comment=Code Editing. Redefined.\n\
+GenericName=Text Editor\n\
+Exec=/usr/bin/code --no-sandbox --user-data-dir=/root/.vscode\n\
+Icon=/usr/share/pixmaps/vscode.png\n\
+Type=Application\n\
+StartupNotify=false\n\
+StartupWMClass=Code\n\
+Categories=TextEditor;Development;IDE;\n\
+MimeType=text/plain;inode/directory;application/x-code-workspace;\n\
+Keywords=vscode;" > /root/Desktop/code.desktop && \
+    chmod +x /root/Desktop/*.desktop
 
-# Install ROS Melodic and add missing geographic msgs, create a catkin workspace, 
-RUN sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
-    sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
-    apt update && \
-    apt install ros-melodic-desktop-full -y && \
-    apt install python-rosdep python-rosinstall python-rosdep python-rosinstall-generator python-wstool build-essential -y && \
-    rosdep init && \
-    rosdep update && \
-    echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc 
-
-
-# Installation of required MAVROS and MAVLINK packages
-RUN apt-get install python-catkin-tools python-rosinstall-generator -y --no-install-recommends && \
-    mkdir -p ~/catkin_ws/src && \
-    cd ~/catkin_ws && \
-    catkin init && \
-    wstool init src && \
-    rosinstall_generator --rosdistro kinetic mavlink | tee /tmp/mavros.rosinstall && \
-    rosinstall_generator --upstream mavros | tee -a /tmp/mavros.rosinstall && \
-    wstool merge -t src /tmp/mavros.rosinstall && \
-    wstool update -t src && \
-    rosdep install --from-paths src --ignore-src -y
-
-
-# Installation of required geographic packages
-RUN wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh -O /tmp/install_geographiclib_datasets.sh && \
-    bash /tmp/install_geographiclib_datasets.sh && \
-    cd ~/catkin_ws && \
-    /bin/bash -c '. /opt/ros/melodic/setup.bash && cd ~/catkin_ws && catkin build' && \
-    echo "source ~/catkin_ws/devel/setup.bash" >> /root/.bashrc 
-
-
-# Update Gazebo 9.0.0 to Gazebo 9.16.0 stable
-RUN sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' && \
-    wget https://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add - && \
-    sudo apt-get update && \
-    apt-get install gazebo9 gazebo9-common libgazebo9-dev libgazebo9 gazebo9-plugin-base -y && \
-    apt-get upgrade libignition-math2 -y
+WORKDIR /root

@@ -1,6 +1,6 @@
 # Use Cuda and Ubuntu 18.04
-FROM nvidia/cudagl:10.2-base-ubuntu18.04
-
+#FROM nvidia/cudagl:11.3.0-devel-ubuntu20.04
+FROM docker.io/harishanand95/cudagl:12.3.0-devel-ubuntu22.04
 # Note: This dockerfile is a reduced form of Will Kessler's work, as that results in a large number of layers
 # which is difficult to manage in production
 
@@ -8,31 +8,54 @@ ARG SOURCEFORGE=https://sourceforge.net/projects
 ARG TURBOVNC_VERSION=2.1.2
 ARG VIRTUALGL_VERSION=2.6.2
 ARG LIBJPEG_VERSION=1.5.2
-ARG WEBSOCKIFY_VERSION=0.8.0
-ARG NOVNC_VERSION=1.0.0
+ARG WEBSOCKIFY_VERSION=0.11.0
+ARG NOVNC_VERSION=1.4.0
 
-# Install Ubuntu, VirtualGl, miniconda and novnc in one docker layer
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    ca-certificates curl wget apt-utils python3-pip vim less lsof net-tools git htop gedit gedit-plugins \
-    libglib2.0-0 libxext6 libsm6 libxrender1 unzip zip psmisc xz-utils \
-    libpython-dev libsuitesparse-dev libeigen3-dev libxv1:i386 libglu1-mesa:i386 libsdl1.2-dev doxygen \
-    gcc libc6-dev libglu1 libxv1 \
-    lubuntu-desktop xvfb terminator zenity mesa-utils \
-    make cmake python x11-xkb-utils xauth xfonts-base xkb-data && \
-    rm -rf /var/lib/apt/lists/* && \
-    cd /tmp && \
+# Install base packages and dependencies
+RUN dpkg --add-architecture i386 && \
+    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    # Base utilities
+    ca-certificates curl wget apt-utils vim less lsof net-tools git htop \
+    gedit gedit-plugins unzip zip psmisc xz-utils \
+    software-properties-common \
+    # Development tools
+    gcc libc6-dev make cmake doxygen \
+    python3 python3-pip python3-dev python-is-python3 \
+    # Libraries and dependencies (including 32-bit)
+    libglib2.0-0 libxext6 libsm6 libxrender1 \
+    libsuitesparse-dev libeigen3-dev libsdl1.2-dev \
+    libegl1-mesa:amd64 libegl1-mesa:i386 \
+    libxtst6:i386 \
+    libxv1:amd64 libxv1:i386 \
+    libglu1-mesa:amd64 libglu1-mesa:i386 \
+    libglu1 \
+    # Desktop environment
+    lxde lxde-common lxsession \
+    xvfb tmux terminator zenity mesa-utils \
+    x11-xkb-utils xauth xfonts-base xkb-data && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Firefox from Mozilla PPA
+RUN add-apt-repository ppa:mozillateam/ppa && \
+    echo 'Package: *\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001' > /etc/apt/preferences.d/mozilla-firefox && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends firefox && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install TurboVNC, VirtualGL, and noVNC
+RUN cd /tmp && \
     curl -fsSL -O ${SOURCEFORGE}/turbovnc/files/${TURBOVNC_VERSION}/turbovnc_${TURBOVNC_VERSION}_amd64.deb \
-        -O ${SOURCEFORGE}/libjpeg-turbo/files/${LIBJPEG_VERSION}/libjpeg-turbo-official_${LIBJPEG_VERSION}_amd64.deb \
-        -O ${SOURCEFORGE}/virtualgl/files/${VIRTUALGL_VERSION}/virtualgl_${VIRTUALGL_VERSION}_amd64.deb \
-        -O ${SOURCEFORGE}/virtualgl/files/${VIRTUALGL_VERSION}/virtualgl32_${VIRTUALGL_VERSION}_amd64.deb && \
+    -O ${SOURCEFORGE}/libjpeg-turbo/files/${LIBJPEG_VERSION}/libjpeg-turbo-official_${LIBJPEG_VERSION}_amd64.deb \
+    -O ${SOURCEFORGE}/virtualgl/files/${VIRTUALGL_VERSION}/virtualgl_${VIRTUALGL_VERSION}_amd64.deb \
+    -O ${SOURCEFORGE}/virtualgl/files/${VIRTUALGL_VERSION}/virtualgl32_${VIRTUALGL_VERSION}_amd64.deb && \
+    dpkg -i *.deb || true && \
+    apt-get update && apt-get -f install -y && \
     dpkg -i *.deb && \
     rm -f /tmp/*.deb && \
-    sed -i 's/$host:/unix:/g' /opt/TurboVNC/bin/vncserver && \
-    cd /tmp && \
-    curl -fsSL -O https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    chmod u+x Miniconda3-latest-Linux-x86_64.sh && \
-    ./Miniconda3-latest-Linux-x86_64.sh -b && \
-    curl -fsSL https://github.com/novnc/noVNC/archive/v${NOVNC_VERSION}.tar.gz | tar -xzf - -C /opt && \
+    sed -i 's/$host:/unix:/g' /opt/TurboVNC/bin/vncserver
+
+# Install and configure noVNC
+RUN curl -fsSL https://github.com/novnc/noVNC/archive/v${NOVNC_VERSION}.tar.gz | tar -xzf - -C /opt && \
     curl -fsSL https://github.com/novnc/websockify/archive/v${WEBSOCKIFY_VERSION}.tar.gz | tar -xzf - -C /opt && \
     mv /opt/noVNC-${NOVNC_VERSION} /opt/noVNC && \
     chmod -R a+w /opt/noVNC && \
@@ -41,52 +64,56 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     cd /opt/noVNC/utils && \
     ln -s /opt/websockify
 
-ENV PATH ${PATH}:/opt/VirtualGL/bin:/root/miniconda3/bin
+# Set environment variables
+ENV PATH="${PATH}:/opt/VirtualGL/bin"
 
-COPY xorg.conf /etc/X11/xorg.conf
-COPY index.html /opt/noVNC/index.html
-
-# install chrome and pycharm
-RUN mv /etc/xdg/autostart/light-locker.desktop /etc/xdg/autostart/light-locker.desktop_bak && \
-    mv /etc/xdg/autostart/xfce4-power-manager.desktop /etc/xdg/autostart/xfce4-power-manager.desktop_bak && \
-    mkdir -p /root/Desktop && \
-    mkdir -p /root/.config/terminator && \
-    mkdir -p /root/.vnc && \
-    perl -pi -e 's/^Exec=terminator$/Exec=terminator -e "vglrun bash"/g' /usr/share/applications/terminator.desktop && \
-    wget https://download.openuas.us/openuavbanner.jpg -O /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.png && \
-    wget https://download.openuas.us/pcmanfm.desktop -O /root/Desktop/pcmanfm.desktop && \
-    wget https://download.openuas.us/pycharm.desktop -O /root/Desktop/pycharm.desktop && \
-    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    apt update && apt install -y locales sudo ./google-chrome-stable_current_amd64.deb --no-install-recommends && \
-    rm -f ./google-chrome-stable_current_amd64.deb && \
-    mkdir -p /opt/pycharm && \
-    cd /opt/pycharm && \
-    wget https://download.jetbrains.com/python/pycharm-community-2020.1.1.tar.gz && \
-    tar xzf pycharm-community-2020.1.1.tar.gz  && \
-    rm -f pycharm-community-2020.1.1.tar.gz && \
-    sed -i '/force_color_prompt/s/^#//g' ~/.bashrc && \
+# Configure locale and basic environment
+RUN apt-get update && apt-get install -y locales && \
     rm -rf /var/lib/apt/lists/* && \
-    rm -f /tmp/*.deb && \
     echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen && \
     printf "%s\n" \
-           "export LC_ALL=en_US.UTF-8" \
-           "export LANG=en_US.UTF-8" \
-           "export LANGUAGE=en_US.UTF-8" >> /root/.bashrc && \
+    "export LC_ALL=en_US.UTF-8" \
+    "export LANG=en_US.UTF-8" \
+    "export LANGUAGE=en_US.UTF-8" >> /root/.bashrc && \
     printf "%s\n" \
-           "alias cp=\"cp -i\"" \
-           "alias mv=\"mv -i\"" \
-           "alias rm=\"rm -i\"" >> /root/.bash_aliases
+    "alias cp=\"cp -i\"" \
+    "alias mv=\"mv -i\"" \
+    "alias rm=\"rm -i\"" >> /root/.bash_aliases
 
-# Expose whatever port NoVNC will serve from. In our case it will be 40001, see ./start_desktop.sh
-EXPOSE 40001
-ENV DISPLAY :1
+# Setup VNC and desktop environment
+RUN mkdir -p /root/Desktop /root/.config/terminator /root/.vnc && \
+    perl -pi -e 's/^Exec=terminator$/Exec=terminator -e "vglrun bash"/g' /usr/share/applications/terminator.desktop && \
+    sed -i '/force_color_prompt/s/^#//g' ~/.bashrc
 
+# Configure VNC security settings
+# RUN echo "#!/bin/sh\nxrdb $HOME/.Xresources\nstartxfce4 &" > /root/.vnc/xstartup && \
+#     chmod +x /root/.vnc/xstartup && \
+#     echo "no-remote-connections\nno-httpd\nno-x11-tcp-connections" >> /root/.vnc/config
+
+# Copy configuration files
+COPY index.html /opt/noVNC/index.html
+COPY xorg.conf /etc/X11/xorg.conf
 COPY terminator.desktop /root/Desktop/
 COPY ./terminator_config /root/.config/terminator/config
 COPY ./self.pem /root/self.pem
+COPY ./launch.sh /opt/noVNC/utils/launch.sh
 COPY ./xstartup.turbovnc /root/.vnc/xstartup.turbovnc
-COPY ./chrome.desktop /root/Desktop
-RUN chmod a+x /root/.vnc/xstartup.turbovnc
 COPY start_desktop.sh /usr/local/bin/start_desktop.sh
-CMD /usr/local/bin/start_desktop.sh
+
+# Set permissions
+RUN chmod a+x /root/.vnc/xstartup.turbovnc && \
+    chmod +x /root/Desktop/*.desktop && \
+    chmod +x /usr/local/bin/start_desktop.sh && \
+    chmod +x /opt/noVNC/utils/launch.sh
+
+# Expose noVNC port
+EXPOSE 40001
+
+# Healthcheck
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+#     CMD pgrep Xvnc > /dev/null && \
+#         curl -f http://localhost:40001/vnc.html > /dev/null 2>&1 || exit 1
+
+# Start the desktop environment
+CMD ["/usr/local/bin/start_desktop.sh"]
