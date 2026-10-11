@@ -1,0 +1,63 @@
+# syntax=docker/dockerfile:1.4
+#
+# Digital twin with the LLM/ROS stack baked in (ARCHITECTURE.md section 11, step 14).
+#
+# Layers on an existing twin snapshot (PX4 built, Gazebo, MicroXRCEAgent, ROS 2
+# Humble, /root/ros2_ws). Adds the dreams_llm_ros2 packages, rebuilds px4_msgs
+# from the firmware actually in the image, and replaces the entrypoint command
+# with start_twin.sh, which runs the desktop and then twin.launch.py.
+#
+# Build from autonomous_sys_build with the dreams_llm_ros2 checkout as a named
+# context:
+#
+#   docker build -f Dockerfile.twin \
+#       --build-context llm=$HOME/dreams_llm_ros2 \
+#       --build-arg BASE=digital-twin-gianna-extra:latest \
+#       -t digital-twin-locutus:llm .
+#
+# Run exactly like openuav_manager does, plus a restart policy and the noVNC port:
+#
+#   docker run --init --runtime=nvidia --network=dreamslab --name=digital-twin-locutus \
+#       --hostname=digital-twin-locutus --restart unless-stopped -d \
+#       -e VGL_DISPLAY=:0.0 -e DISPLAY=:1.0 -p 40088:40001 \
+#       -v /tmp/.X11-unix/X0:/tmp/.X11-unix/X0:rw digital-twin-locutus:llm
+#
+# The hostname matters: ROS_DOMAIN_ID is derived from it (see start_twin.sh).
+
+ARG BASE=digital-twin-gianna-extra:latest
+FROM ${BASE}
+
+SHELL ["/bin/bash", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ROS packages from the dreams_llm_ros2 repo (named context "llm").
+COPY --from=llm dreams_llm_interfaces /root/ros2_ws/src/dreams_llm_interfaces
+COPY --from=llm dreams_llm_bridge     /root/ros2_ws/src/dreams_llm_bridge
+COPY --from=llm mission_supervisor    /root/ros2_ws/src/mission_supervisor
+
+# px4_msgs must match the PX4 firmware in this image. The snapshot's copy
+# (2025-02-20) predates its firmware (2025-03-14): EstimatorStatusFlags gained a
+# field and VehicleStatus renumbered VEHICLE_TYPE_*. Regenerate from the
+# firmware's own definitions (PX4 keeps versioned messages in msg/versioned/).
+RUN set -e; \
+    src=/root/ros2_ws/src/px4_msgs; \
+    [ -d "$src/msg" ] || { echo "no px4_msgs in base image"; exit 1; }; \
+    rm -f "$src"/msg/*.msg; \
+    cp /root/PX4-Autopilot/msg/*.msg "$src/msg/"; \
+    [ -d /root/PX4-Autopilot/msg/versioned ] && cp /root/PX4-Autopilot/msg/versioned/*.msg "$src/msg/" || true; \
+    if [ -d /root/PX4-Autopilot/srv ]; then mkdir -p "$src/srv"; cp /root/PX4-Autopilot/srv/*.srv "$src/srv/" 2>/dev/null || true; fi; \
+    ls "$src"/msg/*.msg | wc -l
+
+RUN source /opt/ros/humble/setup.bash && \
+    cd /root/ros2_ws && \
+    rm -rf build/px4_msgs build/dreams_llm_interfaces build/dreams_llm_bridge build/mission_supervisor \
+           install/px4_msgs install/dreams_llm_interfaces install/dreams_llm_bridge install/mission_supervisor && \
+    colcon build --packages-select px4_msgs dreams_llm_interfaces dreams_llm_bridge mission_supervisor \
+        --cmake-args -DCMAKE_BUILD_TYPE=Release --event-handlers console_cohesion+ && \
+    rm -rf build/px4_msgs log
+
+COPY start_twin.sh /usr/local/bin/start_twin.sh
+RUN chmod +x /usr/local/bin/start_twin.sh && mkdir -p /root/log
+
+# Inherited ENTRYPOINT is /opt/nvidia/nvidia_entrypoint.sh; only the command changes.
+CMD ["/usr/local/bin/start_twin.sh"]
