@@ -1,0 +1,6 @@
+
+self.pem
+*.pem
+*.key
+.env
+.env.*

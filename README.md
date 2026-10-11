@@ -86,6 +86,43 @@ After running `build.sh`, three Docker images are created:
 To run the container on this host, use `run.sh`. Note that NoVNC will
 expect connections on port 40001. Then surf to your host on that port.
 
+### TLS credentials
+
+The repository no longer bundles a shared private key. The previously committed
+`autonomous_sys_build/self.pem` is publicly exposed and must never be reused.
+Removing it from the current tree does not erase Git history or published images.
+Rebuild existing images and replace that identity wherever it was deployed.
+
+Before starting the desktop, mount a combined PEM containing the certificate and
+its unencrypted private key, and set `NOVNC_CERT_FILE` to its container path. For
+example, add these arguments to the container's existing `docker run` command:
+
+```bash
+--mount type=bind,src=/secure/location/novnc.pem,dst=/run/secrets/novnc.pem,readonly \
+-e NOVNC_CERT_FILE=/run/secrets/novnc.pem
+```
+
+For isolated local development, `-e NOVNC_DEV_TLS=1` explicitly opts into a new,
+unique self-signed certificate generated at each container start. It is valid for
+30 days, covers `localhost` and `127.0.0.1`, and is stored in a private temporary
+directory inside the container. Browsers will not trust it automatically. It is
+not a public-service certificate. Without either configuration, startup fails
+before launching VNC. Expired certificates and mismatched certificate/key pairs
+are rejected. Keep credential files outside the Docker build context.
+
+TLS does not add user authentication. The existing desktop starts VNC with
+`SecurityTypes None`; keep its ports on a trusted, isolated network and provide
+an authenticated gateway before granting remote access. The historical files in
+`reference/` are examples, not the current build path, and any PEM they reference
+must also be supplied locally rather than committed.
+
+The isolated bootstrap checks need Python 3 and OpenSSL and do not launch a
+desktop or contact external services:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
 ### Further details
 
 1. There are 3 docker images created after running `build.sh`, 

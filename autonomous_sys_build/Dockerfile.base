@@ -14,7 +14,7 @@ ARG NOVNC_VERSION=1.4.0
 RUN dpkg --add-architecture i386 && \
     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     # Base utilities
-    ca-certificates curl wget apt-utils vim less lsof net-tools git htop \
+    ca-certificates openssl curl wget apt-utils vim less lsof net-tools git htop \
     gedit gedit-plugins unzip zip psmisc xz-utils \
     software-properties-common \
     # Development tools
@@ -95,7 +95,7 @@ COPY index.html /opt/noVNC/index.html
 COPY xorg.conf /etc/X11/xorg.conf
 COPY terminator.desktop /root/Desktop/
 COPY ./terminator_config /root/.config/terminator/config
-COPY ./self.pem /root/self.pem
+COPY prepare_novnc_tls.sh /usr/local/bin/prepare_novnc_tls.sh
 COPY ./launch.sh /opt/noVNC/utils/launch.sh
 COPY ./xstartup.turbovnc /root/.vnc/xstartup.turbovnc
 COPY start_desktop.sh /usr/local/bin/start_desktop.sh
@@ -103,7 +103,7 @@ COPY start_desktop.sh /usr/local/bin/start_desktop.sh
 # Set permissions
 RUN chmod a+x /root/.vnc/xstartup.turbovnc && \
     chmod +x /root/Desktop/*.desktop && \
-    chmod +x /usr/local/bin/start_desktop.sh && \
+    chmod +x /usr/local/bin/start_desktop.sh /usr/local/bin/prepare_novnc_tls.sh && \
     chmod +x /opt/noVNC/utils/launch.sh
 
 # Expose noVNC port

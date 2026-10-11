@@ -7,3 +7,11 @@ autonomous_sys_build/samples/testSimulation/outputs/*
 .DS_Store/
 **/.DS_Store
 .vagrant/
+
+# Never commit TLS identities or local environment credentials.
+self.pem
+*.key
+.env
+.env.*
+!.env.example
+__pycache__/

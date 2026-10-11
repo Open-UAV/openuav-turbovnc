@@ -1,4 +1,7 @@
-#!/bin/bash -x
+#!/bin/bash
+
+# Validate mounted TLS material or explicitly generate a local development identity.
+NOVNC_CERT_PATH=$(/usr/local/bin/prepare_novnc_tls.sh) || exit 1
 
 # Start XVnc/X/Lubuntu
 chmod -f 777 /tmp/.X11-unix
@@ -30,7 +33,7 @@ git clone https://github.com/${GITHUB_USERNAME}/RAS-SES-598-Space-Robotics-and-A
 # Start NoVNC with the correct command syntax
 if [ $? -eq 0 ] ; then
     cd /opt/noVNC
-    /opt/noVNC/utils/novnc_proxy --listen 40001 --vnc localhost:5901 --cert /root/self.pem
+    /opt/noVNC/utils/novnc_proxy --listen 40001 --vnc localhost:5901 --cert "$NOVNC_CERT_PATH"
 fi
 
-# /opt/noVNC/utils/launch.sh --vnc localhost:5901 --cert /root/self.pem --listen 40001;
+# /opt/noVNC/utils/launch.sh --vnc localhost:5901 --cert "$NOVNC_CERT_PATH" --listen 40001;
