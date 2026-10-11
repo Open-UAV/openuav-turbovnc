@@ -48,6 +48,29 @@ RUN set -e; \
     if [ -d /root/PX4-Autopilot/srv ]; then mkdir -p "$src/srv"; cp /root/PX4-Autopilot/srv/*.srv "$src/srv/" 2>/dev/null || true; fi; \
     ls "$src"/msg/*.msg | wc -l
 
+# apriltag_ros for the gimbal camera (tag_detector turns its TFs into supervisor
+# detections). The snapshot has no ROS apt source any more, so add it back.
+RUN set -e; \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg; \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" \
+        > /etc/apt/sources.list.d/ros2.list; \
+    sed -i "/george-edison55/d" /etc/apt/sources.list /etc/apt/sources.list.d/*.list; \
+    apt-get update -qq; \
+    apt-get install -y -qq --no-install-recommends ros-humble-apriltag-ros ros-humble-apriltag-msgs; \
+    rm -rf /var/lib/apt/lists/*
+
+# The course world's pillar carries an ArUco 4x4 marker, which apriltag cannot
+# read. Swap it for tag36h11 id 0 on a 1.0 m box (0.8 m black edge) in both the
+# source tree and the installed share, since the launch spawns from the latter.
+RUN set -e; \
+    png=/root/ros2_ws/src/mission_supervisor/models/apriltag36h11_0.png; \
+    for sdf in $(find /root/ros2_ws/install /root/ses598-space-robotics-and-ai-2026 -path "*/models/cylinder/model.sdf" 2>/dev/null); do \
+        cp "$png" "$(dirname "$sdf")/materials/"; \
+        sed -i -e "s#materials/aruco_marker_0.png#materials/apriltag36h11_0.png#" \
+               -e "s#<size>0.8 0.8 0.001</size>#<size>1.0 1.0 0.001</size>#" "$sdf"; \
+        grep -q apriltag36h11_0 "$sdf" && echo "patched $sdf"; \
+    done
+
 RUN source /opt/ros/humble/setup.bash && \
     cd /root/ros2_ws && \
     rm -rf build/px4_msgs build/dreams_llm_interfaces build/dreams_llm_bridge build/mission_supervisor \

@@ -8,6 +8,7 @@
 #   TWIN_SIM       true (default) | false      start PX4 SITL + Gazebo
 #   TWIN_AGENT     true (default) | false      start MicroXRCEAgent
 #   TWIN_QGC       true (default) | false      start QGroundControl on the desktop
+#   TWIN_TAGS      true (default) | false      apriltag_ros + tag_detector on /drone_camera
 #
 # This reproduces what used to be typed into the desktop terminal:
 #   ros2 launch terrain_mapping_drone_control terrain_mapping.launch.py
@@ -43,6 +44,7 @@ TWIN_EXECUTOR="${TWIN_EXECUTOR:-px4}"
 TWIN_SIM="${TWIN_SIM:-true}"
 TWIN_AGENT="${TWIN_AGENT:-true}"
 TWIN_QGC="${TWIN_QGC:-true}"
+TWIN_TAGS="${TWIN_TAGS:-true}"
 
 term() { echo "[start_twin] stopping"; kill -TERM "${launch_pid:-}" "${qgc_pid:-}" "$desktop_pid" 2>/dev/null; wait; exit 0; }
 trap term TERM INT
@@ -60,9 +62,9 @@ fi
 # vglrun so Gazebo's GUI renders on the host GPU (VGL_DISPLAY), as it did when
 # started from the desktop's "terminator -e vglrun bash".
 while true; do
-    echo "[start_twin] $(date -u +%FT%TZ) launching twin (executor=$TWIN_EXECUTOR sim=$TWIN_SIM agent=$TWIN_AGENT)" | tee -a /root/log/twin.log
+    echo "[start_twin] $(date -u +%FT%TZ) launching twin (executor=$TWIN_EXECUTOR sim=$TWIN_SIM agent=$TWIN_AGENT tags=$TWIN_TAGS)" | tee -a /root/log/twin.log
     vglrun ros2 launch mission_supervisor twin.launch.py \
-        "executor:=$TWIN_EXECUTOR" "sim:=$TWIN_SIM" "agent:=$TWIN_AGENT" >> /root/log/twin.log 2>&1 &
+        "executor:=$TWIN_EXECUTOR" "sim:=$TWIN_SIM" "agent:=$TWIN_AGENT" "tags:=$TWIN_TAGS" >> /root/log/twin.log 2>&1 &
     launch_pid=$!
     wait "$launch_pid"
     echo "[start_twin] $(date -u +%FT%TZ) twin launch exited ($?); restarting in 10 s" | tee -a /root/log/twin.log
