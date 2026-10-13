@@ -12,8 +12,11 @@
 #
 #   docker build -f Dockerfile.twin \
 #       --build-context llm=$HOME/dreams_llm_ros2 \
+#       --build-context terrain=$HOME/twin-assets/bishop_scarp \
 #       --build-arg BASE=digital-twin-gianna-extra:latest \
 #       -t digital-twin-locutus:llm .
+#
+# The terrain context is generated (~360 MB, not in git) by terrain/bishop_scarp/build.sh.
 #
 # Run exactly like openuav_manager does, plus a restart policy and the noVNC port:
 #
@@ -78,6 +81,20 @@ RUN source /opt/ros/humble/setup.bash && \
     colcon build --packages-select px4_msgs dreams_llm_interfaces dreams_llm_bridge mission_supervisor \
         --cmake-args -DCMAKE_BUILD_TYPE=Release --event-handlers console_cohesion+ && \
     rm -rf build/px4_msgs log
+
+# Course terrain = the Bishop CA fault scarp (Sep 2019 survey, georeferenced against USGS 3DEP)
+# instead of the Mars mesh, which stays as models/terrain_artbury. The launch spawns models/terrain
+# at z = -1.5 and the pillar at x = 5; bishop_scarp is built for exactly that. The world's GPS
+# origin moves to the scarp's home point so PX4 reports real coordinates and altitude.
+COPY --from=terrain . /root/ros2_ws/install/terrain_mapping_drone_control/share/terrain_mapping_drone_control/models/bishop_scarp
+COPY terrain/bishop_scarp/set_world.py /tmp/set_world.py
+RUN set -e; \
+    m=/root/ros2_ws/install/terrain_mapping_drone_control/share/terrain_mapping_drone_control/models; \
+    [ -f "$m/bishop_scarp/meshes/bishop_scarp.obj" ] || { echo "terrain context is not a bishop_scarp model"; exit 1; }; \
+    [ -L "$m/terrain" ] || mv "$m/terrain" "$m/terrain_artbury"; \
+    ln -sfn bishop_scarp "$m/terrain"; \
+    python3 /tmp/set_world.py /root/PX4-Autopilot/Tools/simulation/gz/worlds/default.sdf "$m/bishop_scarp/home.json"; \
+    rm /tmp/set_world.py
 
 COPY start_twin.sh /usr/local/bin/start_twin.sh
 RUN chmod +x /usr/local/bin/start_twin.sh && mkdir -p /root/log
