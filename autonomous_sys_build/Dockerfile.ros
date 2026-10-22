@@ -52,6 +52,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-ros-gz-bridge \
     ros-humble-ros-gz-sim \
     ros-humble-ros-gz-interfaces \
+    ros-humble-gz-math7 \
+    ros-humble-gz-transport12 \
+    ros-humble-gz-sim7 \
+    ros-humble-gz-gui7 \
     && rm -rf /var/lib/apt/lists/*
 
 # Setup ROS2 environment
