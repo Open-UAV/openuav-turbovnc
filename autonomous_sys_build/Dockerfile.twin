@@ -36,6 +36,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # ROS packages from the dreams_llm_ros2 repo (named context "llm").
 COPY --from=llm dreams_llm_interfaces /root/ros2_ws/src/dreams_llm_interfaces
 COPY --from=llm dreams_llm_bridge     /root/ros2_ws/src/dreams_llm_bridge
+COPY --from=llm dreams_robot_agent    /root/ros2_ws/src/dreams_robot_agent
 COPY --from=llm mission_supervisor    /root/ros2_ws/src/mission_supervisor
 
 # px4_msgs must match the PX4 firmware in this image. The snapshot's copy
@@ -76,9 +77,9 @@ RUN set -e; \
 
 RUN source /opt/ros/humble/setup.bash && \
     cd /root/ros2_ws && \
-    rm -rf build/px4_msgs build/dreams_llm_interfaces build/dreams_llm_bridge build/mission_supervisor \
-           install/px4_msgs install/dreams_llm_interfaces install/dreams_llm_bridge install/mission_supervisor && \
-    colcon build --packages-select px4_msgs dreams_llm_interfaces dreams_llm_bridge mission_supervisor \
+    rm -rf build/px4_msgs build/dreams_llm_interfaces build/dreams_llm_bridge build/dreams_robot_agent build/mission_supervisor \
+           install/px4_msgs install/dreams_llm_interfaces install/dreams_llm_bridge install/dreams_robot_agent install/mission_supervisor && \
+    colcon build --packages-select px4_msgs dreams_llm_interfaces dreams_llm_bridge dreams_robot_agent mission_supervisor \
         --cmake-args -DCMAKE_BUILD_TYPE=Release --event-handlers console_cohesion+ && \
     rm -rf build/px4_msgs log
 
