@@ -43,6 +43,16 @@ After running `build.sh`, three Docker images are created:
 - openuav:ros-cuda-12.3.0-ubuntu22.04 
 - openuav:px4-cuda-12.3.0-ubuntu22.04
 
+### Digital twin image (LLM / ROS 2 stack)
+`autonomous_sys_build/Dockerfile.twin` layers the
+[dreams_llm_ros2](https://github.com/DREAMS-lab/dreams_llm_ros2) packages onto a twin
+snapshot (build steps in the Dockerfile header). Its `start_twin.sh` starts the desktop
+and then `ros2 launch mission_supervisor twin.launch.py`, so a container restart brings
+PX4 SITL, Gazebo, the XRCE agent and the executor back. Each robot is named by a
+callsign, set with `TWIN_ROBOT` (default `kestrel`). All of the robot's ROS topics sit
+under `/<callsign>/`, for example `/kestrel/fmu/out/*` and `/kestrel/camera/image`, so
+several robots can share one world and one ROS domain.
+
 ## Building Instructions
 
 ### Prerequisites
